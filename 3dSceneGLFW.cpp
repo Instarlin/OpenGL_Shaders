@@ -9,8 +9,8 @@ using namespace std;
 
 const int width = 750, height = 550;
 
-const char *vertexPath = "Path";
-const char *fragmentPath = "Path";
+const char *vertexPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/vertex.glsl";
+const char *fragmentPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/fragmentMarch750x550.glsl";
 
 string getSystemPowerInfo() {
   BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpSystemPowerStatus);
@@ -51,7 +51,7 @@ string getSystemPowerInfo() {
   }
 };
 
-void GetOpenGLVersionInfo() {
+void getOpenGLVersionInfo() {
   cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
   cout << "Rerenderer: " << glGetString(GL_RENDERER) << endl;
   cout << "Version: " << glGetString(GL_VERSION) << endl;
@@ -61,6 +61,8 @@ void GetOpenGLVersionInfo() {
 
 #define numVAOs 1
 GLuint renderingProgram;
+GLuint fShader;
+GLuint vShader;
 GLuint vao[numVAOs];
 
 string readShaderSource(const char *filePath, const char *type) {
@@ -96,19 +98,22 @@ void printProgramLog(int prog) {
   };
 };
 
-GLuint createShaderProgram() {
+GLuint createShaderProgram(int resetShader) {
+  if (resetShader == 1) glDeleteProgram(renderingProgram);
   string vertexShaderStr = readShaderSource(vertexPath, "Vertex");
   string fragmentShaderStr = readShaderSource(fragmentPath, "Fragment");
   const char *vertexShader = vertexShaderStr.c_str();
   const char *fshaderSource = fragmentShaderStr.c_str();
 
-  GLuint vShader = createShader(vertexShader, GL_VERTEX_SHADER);
-  GLuint fShader = createShader(fshaderSource, GL_FRAGMENT_SHADER);
+  vShader = createShader(vertexShader, GL_VERTEX_SHADER);
+  fShader = createShader(fshaderSource, GL_FRAGMENT_SHADER);
 
   GLuint shaderProgram = glCreateProgram();
   glAttachShader(shaderProgram, vShader);
   glAttachShader(shaderProgram, fShader);
   glLinkProgram(shaderProgram);
+  glDeleteShader(vShader);
+  glDeleteShader(fShader);
 
   GLint result;
   glGetShaderiv(shaderProgram, GL_LINK_STATUS, &result);
@@ -120,8 +125,8 @@ GLuint createShaderProgram() {
 };
 
 void Init(GLFWwindow* window) {
-  GetOpenGLVersionInfo();
-  renderingProgram = createShaderProgram();
+  getOpenGLVersionInfo();
+  renderingProgram = createShaderProgram(0);
   glGenVertexArrays(numVAOs, vao);
   glBindVertexArray(vao[0]);
 };
@@ -154,7 +159,7 @@ int fisherYatesShuffle(vector<int> &arr) {
 
 int newHash = fisherYatesShuffle(arr);
 
-void Display(GLFWwindow* window, double currentTime) {
+void display(GLFWwindow* window, double currentTime) {
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUseProgram(renderingProgram);
@@ -175,8 +180,19 @@ void Display(GLFWwindow* window, double currentTime) {
   glDrawArrays(GL_TRIANGLES, 0, 3);
 };
 
+bool is_left_ctrl_down = false;
+bool is_r_down = false;
+
+void RefreshPressed(GLFWwindow *window, int key, int scancode, int action, int mods) {
+  if (key == GLFW_KEY_LEFT_CONTROL) is_left_ctrl_down = action == GLFW_PRESS;
+  if (key == GLFW_KEY_R) is_r_down = action == GLFW_PRESS;
+  if (is_left_ctrl_down && is_r_down) {
+    renderingProgram = createShaderProgram(1);
+  }
+};
+
 int main(void) {
-  if (!glfwInit()) exit(EXIT_FAILURE); 
+  if (!glfwInit()) exit(EXIT_FAILURE);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   GLFWwindow* window = glfwCreateWindow(width, height, "SceneGLFW", NULL, NULL);
@@ -186,9 +202,10 @@ int main(void) {
   glfwSwapInterval(1);
   Init(window);
   while (!glfwWindowShouldClose(window)) {
-    Display(window, glfwGetTime());
+    display(window, glfwGetTime());
     glfwSwapBuffers(window);
     glfwPollEvents();
+    glfwSetKeyCallback(window, RefreshPressed);
   };
   glfwDestroyWindow(window);
   glfwTerminate();

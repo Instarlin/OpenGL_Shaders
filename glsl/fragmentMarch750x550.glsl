@@ -66,55 +66,55 @@ mat2 rot(float r) {
 //   return d;
 // };
 
-// float map(vec3 p) {
-//   vec3 size = vec3(.15);
-//   vec3 spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
-//   float sphere = sdSphere(p - spherePosition, .5);
-
-//   vec3 q = p;
-
-//   q.yz += time/4;
-//   q = fract(q) - .5;
-
-//   // vec3 boxPosition = vec3(0, 0, 0);
-//   // float box = sdBox(q, vec3(.15));
-//   float box = sdBox(q, size);
-//   float cb = sdCrosscube(q, size);
-//   box = max(-cb, box);
-
-//   for (int i = 0; i < 4; i++) {
-//     size *= 1./3.;
-//     float m = size.x*2.;
-//     q = mod(q-0.5*m, m)-0.5*m;
-//     cb = sdCrosscube(q, size);
-//     box = max(box, -cb);
-//   };
-
-//   float ground = p.y + .75;
-
-//   return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
-//   //* rough operations
-//   // min(d1, d2) Union
-//   // max(d1, d2) Intersection
-//   // max(-d1, d2) Substraction
-// };
-
 float map(vec3 p) {
+  vec3 size = vec3(.15);
+  vec3 spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
+  float sphere = sdSphere(p - spherePosition, .5);
+
   vec3 q = p;
 
-  q.xy += .5;
-  q.yz += .15 * time;
-  q.x += .1 * time;
+  q.yz += time/4;
   q = fract(q) - .5;
 
-  vec3 spherePosition = vec3(-1.5, 0.25, -1.5);
-  float sphere = sdSphere(q, 0.65);
+  // vec3 boxPosition = vec3(0, 0, 0);
+  // float box = sdBox(q, vec3(.15));
+  float box = sdBox(q, size);
+  float cb = sdCrosscube(q, size);
+  box = max(-cb, box);
 
-  vec3 boxPosition = vec3(0, 0, 0);
-  float box = sdBox(q, vec3(.5));
+  for (int i = 0; i < 4; i++) {
+    size *= 1./3.;
+    float m = size.x*2.;
+    q = mod(q-0.5*m, m)-0.5*m;
+    cb = sdCrosscube(q, size);
+    box = max(box, -cb);
+  };
 
-  return max(-sphere, box);
+  float ground = p.y + .75;
+
+  return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
+  //* rough operations
+  // min(d1, d2) Union
+  // max(d1, d2) Intersection
+  // max(-d1, d2) Substraction
 };
+
+// float map(vec3 p) {
+//   vec3 q = p;
+
+//   q.xy += .5;
+//   q.yz += .15 * time;
+//   q.x += .1 * time;
+//   q = fract(q) - .5;
+
+//   vec3 spherePosition = vec3(-1.5, 0.25, -1.5);
+//   float sphere = sdSphere(q, 0.65);
+
+//   vec3 boxPosition = vec3(0, 0, 0);
+//   float box = sdBox(q, vec3(.5));
+
+//   return max(-sphere, box);
+// };
 
 void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
