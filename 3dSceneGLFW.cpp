@@ -10,7 +10,7 @@ using namespace std;
 const int width = 750, height = 550;
 
 const char *vertexPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/vertex.glsl";
-const char *fragmentPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/fragmentMarch750x550.glsl";
+const char *fragmentPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/noiseCloud.glsl";
 
 string getSystemPowerInfo() {
   BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpSystemPowerStatus);

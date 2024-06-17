@@ -46,58 +46,58 @@ mat2 rot(float r) {
   return mat2(cos(r), sin(r), -sin(r), cos(r));
 };
 
-// float map(vec3 p) {
-//   p.xz *= rot(time/12);
-//   p.yz *= rot(time/12);
-
-//   vec3 size = vec3(1.);
-//   float d = sdBox(p, size);
-//   float cd = sdCrosscube(p, size);
-//   d = max(d, -cd);
-
-//   for (int i = 0; i < 6; i++) {
-//     size *= 1./3.;
-//     float m = size.x*2.;
-//     p = mod(p-0.5*m, m)-0.5*m;
-//     cd = sdCrosscube(p, size);
-//     d = max(d, -cd);
-//   };
-
-//   return d;
-// };
-
 float map(vec3 p) {
-  vec3 size = vec3(.15);
-  vec3 spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
-  float sphere = sdSphere(p - spherePosition, .5);
+  p.xz *= rot(time/12);
+  p.yz *= rot(time/12);
 
-  vec3 q = p;
+  vec3 size = vec3(1.);
+  float d = sdBox(p, size);
+  float cd = sdCrosscube(p, size);
+  d = max(d, -cd);
 
-  q.yz += time/4;
-  q = fract(q) - .5;
-
-  // vec3 boxPosition = vec3(0, 0, 0);
-  // float box = sdBox(q, vec3(.15));
-  float box = sdBox(q, size);
-  float cb = sdCrosscube(q, size);
-  box = max(-cb, box);
-
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 6; i++) {
     size *= 1./3.;
     float m = size.x*2.;
-    q = mod(q-0.5*m, m)-0.5*m;
-    cb = sdCrosscube(q, size);
-    box = max(box, -cb);
+    p = mod(p-0.5*m, m)-0.5*m;
+    cd = sdCrosscube(p, size);
+    d = max(d, -cd);
   };
 
-  float ground = p.y + .75;
-
-  return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
-  //* rough operations
-  // min(d1, d2) Union
-  // max(d1, d2) Intersection
-  // max(-d1, d2) Substraction
+  return d;
 };
+
+// float map(vec3 p) {
+//   vec3 size = vec3(.15);
+//   vec3 spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
+//   float sphere = sdSphere(p - spherePosition, .5);
+
+//   vec3 q = p;
+
+//   q.yz += time/4;
+//   q = fract(q) - .5;
+
+//   // vec3 boxPosition = vec3(0, 0, 0);
+//   // float box = sdBox(q, vec3(.15));
+//   float box = sdBox(q, size);
+//   float cb = sdCrosscube(q, size);
+//   box = max(-cb, box);
+
+//   for (int i = 0; i < 4; i++) {
+//     size *= 1./3.;
+//     float m = size.x*2.;
+//     q = mod(q-0.5*m, m)-0.5*m;
+//     cb = sdCrosscube(q, size);
+//     box = max(box, -cb);
+//   };
+
+//   float ground = p.y + .75;
+
+//   return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
+//   //* rough operations
+//   // min(d1, d2) Union
+//   // max(d1, d2) Intersection
+//   // max(-d1, d2) Substraction
+// };
 
 // float map(vec3 p) {
 //   vec3 q = p;
