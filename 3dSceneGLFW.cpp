@@ -4,13 +4,15 @@
 #include <iostream>
 #include <windows.h>
 #include <vector>
+#include <Credentials.h>
 
 using namespace std;
 
-const int width = 750, height = 550;
+const int width = 750, height = 550, icow = 32, icoh = 32;
 
-const char *vertexPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/vertex.glsl";
-const char *fragmentPath = "C:/instarlin/programming/three js/projects/glslShaders/glsl/noiseCloud.glsl";
+const char *vertexPath = VPATH;
+const char *fragmentPath = FPATH;
+const char *icoPath = IPATH;
 
 string getSystemPowerInfo() {
   BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpSystemPowerStatus);
@@ -132,32 +134,6 @@ void Init(GLFWwindow* window) {
 };
 
 float x = 0.0f, t = 0.0f, inc = 0.01f, tinc = 0.02f;
-vector<int> arr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-
-void Swap(int &a, int &b) {
-  int temp = a;
-  a = b;
-  b = temp;
-};
-
-int fisherYatesShuffle(vector<int> &arr) {
-  int n = arr.size();
-  srand(time(0));
-
-  for (int i = n - 1; i > 0; --i) {
-    int j = rand() % (i + 1);
-    Swap(arr[i], arr[j]);
-  };
-
-  int res = 0;
-  for (int num : arr) {
-    res += res * 10 + num;
-  }
-
-  return res;
-};
-
-int newHash = fisherYatesShuffle(arr);
 
 void display(GLFWwindow* window, double currentTime) {
   glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -174,8 +150,6 @@ void display(GLFWwindow* window, double currentTime) {
   glProgramUniform1i(renderingProgram, widthLoc, width);
   GLuint heightLoc = glGetUniformLocation(renderingProgram, "height");
   glProgramUniform1i(renderingProgram, heightLoc, height);
-  GLuint hashLoc = glGetUniformLocation(renderingProgram, "hash");
-  glProgramUniform1i(renderingProgram, hashLoc, newHash);
 
   glDrawArrays(GL_TRIANGLES, 0, 3);
 };
@@ -188,14 +162,15 @@ void RefreshPressed(GLFWwindow *window, int key, int scancode, int action, int m
   if (key == GLFW_KEY_R) is_r_down = action == GLFW_PRESS;
   if (is_left_ctrl_down && is_r_down) {
     renderingProgram = createShaderProgram(1);
-  }
+  };
 };
 
 int main(void) {
   if (!glfwInit()) exit(EXIT_FAILURE);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-  GLFWwindow* window = glfwCreateWindow(width, height, "SceneGLFW", NULL, NULL);
+  glfwWindowHint(GLFW_RESIZABLE, true);
+  GLFWwindow* window = glfwCreateWindow(width, height, "ラストエグザイル", NULL, NULL);
   //* glfwGetPrimaryMonitor() in order to get fullscreen
   glfwMakeContextCurrent(window);
   if (glewInit() != GLEW_OK) exit(EXIT_FAILURE);
@@ -204,6 +179,7 @@ int main(void) {
   while (!glfwWindowShouldClose(window)) {
     display(window, glfwGetTime());
     glfwSwapBuffers(window);
+    glfwSwapInterval(1);
     glfwPollEvents();
     glfwSetKeyCallback(window, RefreshPressed);
   };

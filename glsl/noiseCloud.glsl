@@ -3,7 +3,6 @@ out vec4 fragColor;
 uniform float time;
 uniform int width;
 uniform int height;
-uniform int hash;
 
 float sdBox(vec3 p, vec3 b) {
   vec3 q = abs(p) - b;
@@ -28,7 +27,7 @@ float noise(vec2 p) {
   float m = step(a.y, a.x);
   vec2  o = vec2(m, 1.0 - m);
   vec2  b = a - o + K2;
-	vec2  c = a - 1.0 + hash/98754325*K2;
+	vec2  c = a - 1.0 + 2.0*K2;
   vec3  h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
 	vec3  n = h*h*h*h * vec3(dot(a, genHash(i)), dot(b, genHash(i + o)), dot(c, genHash(i + 1.0)));
   return dot(n, vec3(70.0));
@@ -55,7 +54,7 @@ float sdSphere(vec3 p, float r) {
 
 float map(vec3 p) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height)*.4;
-  float noise = clamp(getNoiseContext(uv + time/15), .1, 1.);
+  float noise = getNoiseContext(uv + time/15);
   float ground = p.y - .6*noise + 1.;
 
   p.xz *= rot(time/12);
@@ -76,7 +75,7 @@ void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
   const vec3 sundir = normalize(vec3(2., 2., -2.));
 
-  vec3 ro = vec3(0., 0., -3.6);
+  vec3 ro = vec3(0., .2, -3.8);
   vec3 rd = normalize(vec3(uv, 1));
   vec3 col = vec3(0.);
 
