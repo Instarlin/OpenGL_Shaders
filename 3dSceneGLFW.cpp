@@ -8,11 +8,8 @@
 
 using namespace std;
 
-const int width = 750, height = 550, icow = 32, icoh = 32;
-
-const char *vertexPath = VPATH;
-const char *fragmentPath = FPATH;
-const char *icoPath = IPATH;
+const int width = 750, height = 550;
+const char *vertexPath = VPATH; const char *fragmentPath = FPATH;
 
 string getSystemPowerInfo() {
   BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpSystemPowerStatus);
