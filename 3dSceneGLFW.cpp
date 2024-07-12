@@ -2,14 +2,22 @@
 #include <GLFW\glfw3.h>
 #include <fstream>
 #include <iostream>
+#include <functional>
 #include <windows.h>
 #include <vector>
 #include <Credentials.h>
 
 using namespace std;
+using KeyCallback = std::function<void(GLFWwindow*, int, int, int, int)>;
 
 const int width = 750, height = 550;
 const char *vertexPath = VPATH; const char *fragmentPath = FPATH;
+
+#define numVAOs 1
+GLuint renderingProgram;
+GLuint fShader;
+GLuint vShader;
+GLuint vao[numVAOs];
 
 string getSystemPowerInfo() {
   BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS lpSystemPowerStatus);
@@ -39,15 +47,15 @@ string getSystemPowerInfo() {
     break;
   }
 
-  switch (sps.ACLineStatus) {
-  case 0:
-    break;
-  case 1:
-    break;
-  case 255:
-  default:
-    break;
-  }
+  // switch (sps.ACLineStatus) {
+  // case 0:
+  //   break;
+  // case 1:
+  //   break;
+  // case 255:
+  // default:
+  //   break;
+  // }
 };
 
 void getOpenGLVersionInfo() {
@@ -57,12 +65,6 @@ void getOpenGLVersionInfo() {
   cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
   cout << "Battery status: " << getSystemPowerInfo() << endl;
 };
-
-#define numVAOs 1
-GLuint renderingProgram;
-GLuint fShader;
-GLuint vShader;
-GLuint vao[numVAOs];
 
 string readShaderSource(const char *filePath, const char *type) {
   string content;
@@ -154,12 +156,25 @@ void display(GLFWwindow* window, double currentTime) {
 bool is_left_ctrl_down = false;
 bool is_r_down = false;
 
-void RefreshPressed(GLFWwindow *window, int key, int scancode, int action, int mods) {
-  if (key == GLFW_KEY_LEFT_CONTROL) is_left_ctrl_down = action == GLFW_PRESS;
-  if (key == GLFW_KEY_R) is_r_down = action == GLFW_PRESS;
-  if (is_left_ctrl_down && is_r_down) {
-    renderingProgram = createShaderProgram(1);
-  };
+class KeyCallbackManager {
+  public: 
+    void registerCallBack(KeyCallback callback) {
+      callbacks.push_back(callback);
+    };
+
+    void handleKey(GLFWwindow *window, int key, int scancode, int action, int mods) {
+      for (KeyCallback callback : callbacks) {
+        callback(window, key, scancode, action, mods);
+      }
+    };
+  private:
+    vector<KeyCallback> callbacks;
+};
+
+KeyCallbackManager keyCallbackManager;
+
+void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    keyCallbackManager.handleKey(window, key, scancode, action, mods);
 };
 
 int main(void) {
@@ -173,12 +188,25 @@ int main(void) {
   if (glewInit() != GLEW_OK) exit(EXIT_FAILURE);
   glfwSwapInterval(1);
   Init(window);
+
+  glfwSetKeyCallback(window, glfwKeyCallback);
+  keyCallbackManager.registerCallBack([](GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_LEFT_CONTROL) is_left_ctrl_down = action == GLFW_PRESS;
+    if (key == GLFW_KEY_R) is_r_down = action == GLFW_PRESS;
+    if (is_left_ctrl_down && is_r_down) {
+      renderingProgram = createShaderProgram(1);
+    };
+  });
+  keyCallbackManager.registerCallBack([](GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+
+    }
+  });
+
   while (!glfwWindowShouldClose(window)) {
     display(window, glfwGetTime());
     glfwSwapBuffers(window);
-    glfwSwapInterval(1);
     glfwPollEvents();
-    glfwSetKeyCallback(window, RefreshPressed);
   };
   glfwDestroyWindow(window);
   glfwTerminate();
