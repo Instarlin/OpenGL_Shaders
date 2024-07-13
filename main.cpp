@@ -11,14 +11,13 @@
 #include <Credentials.h>
 
 using namespace std;
-// using namespace ImGui;
 using KeyCallback = std::function<void(GLFWwindow*, int, int, int, int)>;
 
 #define IMGUI_IMPL_OPENGL_LOADER_GLEW
 
-const int width = 750, height = 550;
-const char *vertexPath = VPATH;
-const char *fragmentPath = FPATH;
+const int width = 1920, height = 1080;
+const char* vertexPath = VPATH;
+const char* fragmentPath = FPATH;
 int menuCase = 0;
 
 #define numVAOs 1
@@ -26,6 +25,8 @@ GLuint renderingProgram;
 GLuint fShader;
 GLuint vShader;
 GLuint vao[numVAOs];
+
+bool is_1_down, is_2_down, is_3_down, is_left_ctrl_down, is_r_down;
 
 string getSystemPowerInfo() {
     SYSTEM_POWER_STATUS sps;
@@ -46,7 +47,7 @@ string getSystemPowerInfo() {
     default:
         return "Unknown status";
     }
-}
+};
 
 void getOpenGLVersionInfo() {
     cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
@@ -54,9 +55,19 @@ void getOpenGLVersionInfo() {
     cout << "Version: " << glGetString(GL_VERSION) << endl;
     cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
     cout << "Battery status: " << getSystemPowerInfo() << endl;
-}
+};
 
-string readShaderSource(const char *filePath, const char *type) {
+void windowTerminate(GLFWwindow* window) {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+
+  glfwDestroyWindow(window);
+  glfwTerminate();
+  exit(EXIT_SUCCESS);
+};
+
+string readShaderSource(const char* filePath, const char* type) {
     string content;
     ifstream fileStream(filePath);
     if (!fileStream.is_open()) {cout << "Failed to open " << type << " shader" << endl;}
@@ -67,9 +78,9 @@ string readShaderSource(const char *filePath, const char *type) {
     }
     fileStream.close();
     return content;
-}
+};
 
-GLuint createShader(const char *glslCode, GLenum type) {
+GLuint createShader(const char* glslCode, GLenum type) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, (const char**)&glslCode, NULL);
     glCompileShader(shader);   
@@ -79,22 +90,22 @@ GLuint createShader(const char *glslCode, GLenum type) {
 void printProgramLog(int prog) {
     int len = 0;
     int chWrittn = 0;
-    char *log;
+    char* log;
     glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
     if (len > 0) {
-        log = (char *)malloc(len);
+        log = (char*)malloc(len);
         glGetProgramInfoLog(prog, len, &chWrittn, log);
         cout << "Program Info Log: " << log << endl;
         free(log);
     }
-}
+};
 
 GLuint createShaderProgram(int resetShader) {
     if (resetShader == 1) glDeleteProgram(renderingProgram);
     string vertexShaderStr = readShaderSource(vertexPath, "Vertex");
     string fragmentShaderStr = readShaderSource(fragmentPath, "Fragment");
-    const char *vertexShader = vertexShaderStr.c_str();
-    const char *fshaderSource = fragmentShaderStr.c_str();
+    const char* vertexShader = vertexShaderStr.c_str();
+    const char* fshaderSource = fragmentShaderStr.c_str();
 
     vShader = createShader(vertexShader, GL_VERTEX_SHADER);
     fShader = createShader(fshaderSource, GL_FRAGMENT_SHADER);
@@ -113,131 +124,116 @@ GLuint createShaderProgram(int resetShader) {
     }
 
     return shaderProgram;
-}
+};
+
+void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  if (key == GLFW_KEY_LEFT_CONTROL) is_left_ctrl_down = action == GLFW_PRESS;
+  if (is_left_ctrl_down) {
+    switch (key) {
+    case GLFW_KEY_R:
+      renderingProgram = createShaderProgram(1);
+      break;
+    case GLFW_KEY_1:
+      menuCase = 0;
+      break;
+    case GLFW_KEY_2:
+      menuCase = 1;
+      break;
+    case GLFW_KEY_3:
+      menuCase = 2;
+      break;
+    }
+  };
+};
 
 void Init(GLFWwindow* window) {
-    getOpenGLVersionInfo();
-    renderingProgram = createShaderProgram(0);
-    glGenVertexArrays(numVAOs, vao);
-    glBindVertexArray(vao[0]);
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  glfwMakeContextCurrent(window);
+  if (glewInit() != GLEW_OK) exit(EXIT_FAILURE);
+  getOpenGLVersionInfo();
 
-    ImGui::StyleColorsDark();
+  renderingProgram = createShaderProgram(0);
+  glGenVertexArrays(numVAOs, vao);
+  glBindVertexArray(vao[0]);
+  glfwSwapInterval(1);
+  glfwSetKeyCallback(window, glfwKeyCallback);
 
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 460");
-}
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  ImGui::StyleColorsDark();
+
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init("#version 460");
+};
 
 float x = 0.0f, t = 0.0f, inc = 0.01f, tinc = 0.02f;
 
-void display(GLFWwindow* window, double currentTime) {
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(renderingProgram);
+void Draw(GLFWwindow* window, double currentTime) {
+  glClearColor(0.0, 0.0, 0.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glUseProgram(renderingProgram);
 
-    x += inc;
-    t += tinc;
-    GLuint offsetLoc = glGetUniformLocation(renderingProgram, "offset");
-    glProgramUniform1f(renderingProgram, offsetLoc, x);
-    GLuint timeLoc = glGetUniformLocation(renderingProgram, "time");
-    glProgramUniform1f(renderingProgram, timeLoc, t);
-    GLuint widthLoc = glGetUniformLocation(renderingProgram, "width");
-    glProgramUniform1i(renderingProgram, widthLoc, width);
-    GLuint heightLoc = glGetUniformLocation(renderingProgram, "height");
-    glProgramUniform1i(renderingProgram, heightLoc, height);
-    GLuint typeLoc = glGetUniformLocation(renderingProgram, "type");
-    glProgramUniform1i(renderingProgram, typeLoc, menuCase);
+  x += inc;
+  t += tinc;
+  GLuint offsetLoc = glGetUniformLocation(renderingProgram, "offset");
+  glProgramUniform1f(renderingProgram, offsetLoc, x);
+  GLuint timeLoc = glGetUniformLocation(renderingProgram, "time");
+  glProgramUniform1f(renderingProgram, timeLoc, t);
+  GLuint widthLoc = glGetUniformLocation(renderingProgram, "width");
+  glProgramUniform1i(renderingProgram, widthLoc, width);
+  GLuint heightLoc = glGetUniformLocation(renderingProgram, "height");
+  glProgramUniform1i(renderingProgram, heightLoc, height);
+  GLuint typeLoc = glGetUniformLocation(renderingProgram, "type");
+  glProgramUniform1i(renderingProgram, typeLoc, menuCase);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-}
-
-bool is_left_ctrl_down = false;
-bool is_r_down = false;
-
-class KeyCallbackManager {
-public: 
-    void registerCallBack(KeyCallback callback) {
-        callbacks.push_back(callback);
-    }
-
-    void handleKey(GLFWwindow *window, int key, int scancode, int action, int mods) {
-        for (KeyCallback callback : callbacks) {
-            callback(window, key, scancode, action, mods);
-        }
-    }
-private:
-    vector<KeyCallback> callbacks;
+  glDrawArrays(GL_TRIANGLES, 0, 3);
 };
 
-KeyCallbackManager keyCallbackManager;
+void ImGuiDraw(GLFWwindow* window) {
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
 
-void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    keyCallbackManager.handleKey(window, key, scancode, action, mods);
-}
+  if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) ImGui::OpenPopup("context_menu");
+  if (ImGui::BeginPopup("context_menu")) {
+    if (ImGui::MenuItem("Cube")) {
+      menuCase = 0;
+    }
+    if (ImGui::MenuItem("Trimmed Cubes")) { 
+      menuCase = 1;
+    }
+    if (ImGui::MenuItem("Spheres")) {
+      menuCase = 2;
+    }
+    ImGui::EndPopup();
+  };
+
+  ImGui::Render();
+  int display_w, display_h;
+  glfwGetFramebufferSize(window, &display_w, &display_h);
+  glViewport(0, 0, display_w, display_h);
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+};
 
 int main(void) {
-    if (!glfwInit()) exit(EXIT_FAILURE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_RESIZABLE, true);
-    GLFWwindow* window = glfwCreateWindow(width, height, "3D Scene", NULL, NULL);
-    glfwMakeContextCurrent(window);
-    if (glewInit() != GLEW_OK) exit(EXIT_FAILURE);
-    glfwSwapInterval(1);
-    Init(window);
+  if (!glfwInit()) exit(EXIT_FAILURE);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  glfwWindowHint(GLFW_RESIZABLE, true);
+  GLFWwindow* window = glfwCreateWindow(width, height, "3D Scene",glfwGetPrimaryMonitor(), NULL);
 
-    glfwSetKeyCallback(window, glfwKeyCallback);
-    keyCallbackManager.registerCallBack([](GLFWwindow* window, int key, int scancode, int action, int mods) {
-        if (key == GLFW_KEY_LEFT_CONTROL) is_left_ctrl_down = action == GLFW_PRESS;
-        if (key == GLFW_KEY_R) is_r_down = action == GLFW_PRESS;
-        if (is_left_ctrl_down && is_r_down) {
-            renderingProgram = createShaderProgram(1);
-        }
-    });
+  Init(window);
 
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+  while (!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+    Draw(window, glfwGetTime());
+    ImGuiDraw(window);
 
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-            ImGui::OpenPopup("context_menu");
-        }
-        if (ImGui::BeginPopup("context_menu")) {
-            if (ImGui::MenuItem("Cube")) {
-                menuCase = 0;
-            }
-            if (ImGui::MenuItem("Trimmed Cubes")) { 
-                menuCase = 1;
-            }
-            if (ImGui::MenuItem("Spheres")) {
-                menuCase = 2;
-            }
-            ImGui::EndPopup();
-        }
+    glfwSwapBuffers(window);
+  };
 
-        display(window, glfwGetTime());
-
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwSwapBuffers(window);
-    }
-
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    exit(EXIT_SUCCESS);
-}
+  windowTerminate(window);
+};
 
