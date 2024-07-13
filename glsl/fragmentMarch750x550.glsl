@@ -151,23 +151,6 @@ void main(void) {
   fragColor = vec4(col, 1);
 };
 
-// float map(vec3 p) {
-// vec3 spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
-//   float sphere = sdSphere(p - spherePosition, .5);
-
-//   vec3 q = p;
-
-//   q.yz += time/4;
-//   q = fract(q) - .5;
-
-//   vec3 boxPosition = vec3(0, 0, 0);
-//   float box = sdBox(q, vec3(.15));
-
-//   float ground = p.y + .75;
-
-//   return smoothUnion(ground, smoothUnion(box, sphere, .6), .2);
-// };
-
 //* rough operations
 // min(d1, d2) Union
 // max(d1, d2) Intersection
