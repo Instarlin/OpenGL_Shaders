@@ -48,12 +48,13 @@ mat2 rot(float r) {
 };
 
 float distCase(vec3 p) {
+  float sphere, box, ground; vec3 q, size, spherePosition, boxPosition;
   switch (type) {
     case 0: 
       p.xz *= rot(time/12);
       p.yz *= rot(time/12);
 
-      vec3 size = vec3(1.);
+      size = vec3(1.);
       float d = sdBox(p, size);
       float cd = sdCrosscube(p, size);
       d = max(d, -cd);
@@ -68,53 +69,63 @@ float distCase(vec3 p) {
 
       return d;
     case 1: 
-      vec3 size1 = vec3(.15);
-      vec3 spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
-      float sphere = sdSphere(p - spherePosition, .5);
-
-      vec3 q = p;
+      q = p;
 
       q.yz += time/4;
       q = fract(q) - .5;
 
+      size = vec3(.15);
+      spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
+      sphere = sdSphere(p - spherePosition, .5);
+
       // vec3 boxPosition = vec3(0, 0, 0);
       // float box = sdBox(q, vec3(.15));
-      float box = sdBox(q, size1);
-      float cb = sdCrosscube(q, size1);
+      box = sdBox(q, size);
+      float cb = sdCrosscube(q, size);
       box = max(-cb, box);
 
       for (int i = 0; i < 4; i++) {
-        size1 *= 1./3.;
-        float m = size1.x*2.;
+        size *= 1./3.;
+        float m = size.x*2.;
         q = mod(q-0.5*m, m)-0.5*m;
-        cb = sdCrosscube(q, size1);
+        cb = sdCrosscube(q, size);
         box = max(box, -cb);
       };
 
-      float ground = p.y + .75;
+      ground = p.y + .75;
 
       return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
-      //* rough operations
-      // min(d1, d2) Union
-      // max(d1, d2) Intersection
-      // max(-d1, d2) Substraction
-    case 2:
-      vec3 q2 = p;
+    case 2: 
+      q = p;
+      q.yz += time/4;
+      q = fract(q) - .5;
 
-      q2.xy += .5;
-      q2.yz += .15 * time;
-      q2.x += .1 * time;
-      q2 = fract(q2) - .5;
+      spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
+      sphere = sdSphere(p - spherePosition, .5);
 
-      vec3 spherePosition2 = vec3(-1.5, 0.25, -1.5);
-      float sphere2 = sdSphere(q2, 0.65);
+      boxPosition = vec3(0, 0, 0);
+      box = sdBox(q, vec3(.15));
 
-      vec3 boxPosition = vec3(0, 0, 0);
-      float box2 = sdBox(q2, vec3(.5));
+      ground = p.y + .75;
 
-      return max(-sphere2, box2);
+      return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
+    case 3:
+      q = p;
+
+      q.xy += .5;
+      q.yz += .15 * time;
+      q.x += .1 * time;
+      q = fract(q) - .5;
+
+      spherePosition = vec3(-1.5, 0.25, -1.5);
+      sphere = sdSphere(q, 0.65);
+
+      boxPosition = vec3(0, 0, 0);
+      box = sdBox(q, vec3(.5));
+
+      return max(-sphere, box);
   }
-}
+};
 
 void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
@@ -157,19 +168,7 @@ void main(void) {
 //   return smoothUnion(ground, smoothUnion(box, sphere, .6), .2);
 // };
 
-// float map(vec3 p) {
-//   vec3 q = p;
-
-//   q.xy += .5;
-//   q.yz += .15 * time;
-//   q.x += .1 * time;
-//   q = fract(q) - .5;
-
-//   vec3 spherePosition = vec3(-1.5, 0.25, -1.5);
-//   float sphere = sdSphere(q, 0.65);
-
-//   vec3 boxPosition = vec3(0, 0, 0);
-//   float box = sdBox(q, vec3(.5));
-
-//   return max(-sphere, box);
-// };
+//* rough operations
+// min(d1, d2) Union
+// max(d1, d2) Intersection
+// max(-d1, d2) Substraction

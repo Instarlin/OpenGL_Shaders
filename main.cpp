@@ -203,8 +203,14 @@ void ImGuiDraw(GLFWwindow* window) {
     if (ImGui::MenuItem("Trimmed Cubes")) { 
       menuCase = 1;
     }
-    if (ImGui::MenuItem("Spheres")) {
+    if (ImGui::MenuItem("Cubes")) {
       menuCase = 2;
+    }
+    if (ImGui::MenuItem("Spheres")) {
+      menuCase = 3;
+    }
+    if (ImGui::MenuItem("Exit")) {
+      exit(EXIT_SUCCESS);
     }
     ImGui::EndPopup();
   };
@@ -221,7 +227,7 @@ int main(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_RESIZABLE, true);
-  GLFWwindow* window = glfwCreateWindow(width, height, "3D Scene",glfwGetPrimaryMonitor(), NULL);
+  GLFWwindow* window = glfwCreateWindow(width, height, "3D Scene", glfwGetPrimaryMonitor(), NULL);
 
   Init(window);
 
