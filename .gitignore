@@ -1,0 +1,8 @@
+*.exe
+.vscode
+
+build/*
+glsl/reference
+
+menu.*
+Credentials.h
