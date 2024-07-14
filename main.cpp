@@ -142,6 +142,8 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
     case GLFW_KEY_3:
       menuCase = 2;
       break;
+    case GLFW_KEY_4:
+      menuCase = 3;
     }
   };
 };
