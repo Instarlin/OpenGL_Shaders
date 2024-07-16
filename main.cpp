@@ -1,6 +1,3 @@
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <fstream>
@@ -8,6 +5,8 @@
 #include <functional>
 #include <windows.h>
 #include <vector>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include <Credentials.h>
 
 using namespace std;
