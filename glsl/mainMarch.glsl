@@ -4,6 +4,8 @@ uniform float time;
 uniform int width;
 uniform int height;
 uniform int type;
+uniform int posOffset;
+uniform int rotateSpeed;
 
 float smoothUnion(float d1, float d2, float k) {
   float h = clamp(0.5 + 0.5*(d2-d1)/k, 0.0, 1.0);
@@ -51,8 +53,9 @@ float distCase(vec3 p) {
   float sphere, box, ground; vec3 q, size, spherePosition, boxPosition;
   switch (type) {
     case 0: 
-      p.xz *= rot(time/12);
-      p.yz *= rot(time/12);
+      p.xz *= rot(time/rotateSpeed);
+      p.yz *= rot(time/rotateSpeed);
+      // p.xy = p.xy - posOffset;
 
       size = vec3(1.);
       float d = sdBox(p, size);
@@ -72,14 +75,15 @@ float distCase(vec3 p) {
       q = p;
 
       q.yz += time/4;
+      q.z += time * posOffset;
       q = fract(q) - .5;
 
       size = vec3(.15);
       spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
       sphere = sdSphere(p - spherePosition, .5);
 
-      // vec3 boxPosition = vec3(0, 0, 0);
-      // float box = sdBox(q, vec3(.15));
+      vec3 boxPosition = vec3(0, 0, 0);
+      float box = sdBox(q, vec3(.15));
       box = sdBox(q, size);
       float cb = sdCrosscube(q, size);
       box = max(-cb, box);
@@ -101,6 +105,7 @@ float distCase(vec3 p) {
       q = fract(q) - .5;
 
       spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
+      // spherePosition.z = spherePosition.z + posOffset;
       sphere = sdSphere(p - spherePosition, .5);
 
       boxPosition = vec3(0, 0, 0);
@@ -130,9 +135,9 @@ float distCase(vec3 p) {
 void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
 
-  vec3 ro = vec3(0, 0, -3);         // origin
-  vec3 rd = normalize(vec3(uv, 1)); // direction
-  vec3 col = vec3(0);               // final color
+  vec3 ro = vec3(0, 0, -3 - posOffset);         // origin
+  vec3 rd = normalize(vec3(uv, 1));             // direction
+  vec3 col = vec3(0);                           // final color
 
   float t = 0.;
 

@@ -5,8 +5,8 @@
 #include <functional>
 #include <windows.h>
 #include <vector>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include <imgui/backend/imgui_impl_glfw.h>
+#include <imgui/backend/imgui_impl_opengl3.h>
 #include <Credentials.h>
 
 using namespace std;
@@ -18,6 +18,8 @@ const int width = 1920, height = 1080;
 const char* vertexPath = VPATH;
 const char* fragmentPath = FPATH;
 int menuCase = 0;
+int defvalue = 0;
+int mcrt = 12;
 
 #define numVAOs 1
 GLuint renderingProgram;
@@ -162,6 +164,7 @@ void Init(GLFWwindow* window) {
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   ImGui::StyleColorsDark();
 
   ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -187,6 +190,10 @@ void Draw(GLFWwindow* window, double currentTime) {
   glProgramUniform1i(renderingProgram, heightLoc, height);
   GLuint typeLoc = glGetUniformLocation(renderingProgram, "type");
   glProgramUniform1i(renderingProgram, typeLoc, menuCase);
+  GLuint posLoc = glGetUniformLocation(renderingProgram, "posOffset");
+  glProgramUniform1i(renderingProgram, posLoc, defvalue);
+  GLuint rotateLoc = glGetUniformLocation(renderingProgram, "rotateSpeed");
+  glProgramUniform1i(renderingProgram, rotateLoc, mcrt);
 
   glDrawArrays(GL_TRIANGLES, 0, 3);
 };
@@ -215,6 +222,11 @@ void ImGuiDraw(GLFWwindow* window) {
     }
     ImGui::EndPopup();
   };
+
+  // ImGui::SetCursorPos(ImVec2(100, 100));
+  ImGui::SliderInt("distance", &defvalue, -10, 20);
+  ImGui::SliderInt("rotation speed", &mcrt, 1, 16);
+  ImGui::Text("Fps: %.3f", ImGui::GetIO().Framerate);
 
   ImGui::Render();
   int display_w, display_h;
