@@ -13,20 +13,14 @@ using namespace std;
 using KeyCallback = std::function<void(GLFWwindow*, int, int, int, int)>;
 
 #define IMGUI_IMPL_OPENGL_LOADER_GLEW
+#define numVAOs 1
 
 const int width = 1920, height = 1080;
 const char* vertexPath = VPATH;
 const char* fragmentPath = FPATH;
-int menuCase = 0;
-int defvalue = 0;
-int mcrt = 12;
-
-#define numVAOs 1
-GLuint renderingProgram;
-GLuint fShader;
-GLuint vShader;
-GLuint vao[numVAOs];
-
+GLuint renderingProgram, fShader, vShader, vao[numVAOs];
+int menuCase = 0, defvalue = 0, defRotationSpeed = 12, defRenderAmount = 80;
+float x = 0.0f, t = 0.0f, inc = 0.01f, tinc = 0.02f;
 bool is_1_down, is_2_down, is_3_down, is_left_ctrl_down, is_r_down;
 
 string getSystemPowerInfo() {
@@ -149,6 +143,10 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
   };
 };
 
+void glfwScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+  defvalue += (int)yoffset;
+};
+
 void Init(GLFWwindow* window) {
   glfwMakeContextCurrent(window);
   if (glewInit() != GLEW_OK) exit(EXIT_FAILURE);
@@ -159,6 +157,7 @@ void Init(GLFWwindow* window) {
   glBindVertexArray(vao[0]);
   glfwSwapInterval(1);
   glfwSetKeyCallback(window, glfwKeyCallback);
+  glfwSetScrollCallback(window, glfwScrollCallback);
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -170,8 +169,6 @@ void Init(GLFWwindow* window) {
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init("#version 460");
 };
-
-float x = 0.0f, t = 0.0f, inc = 0.01f, tinc = 0.02f;
 
 void Draw(GLFWwindow* window, double currentTime) {
   glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -193,7 +190,9 @@ void Draw(GLFWwindow* window, double currentTime) {
   GLuint posLoc = glGetUniformLocation(renderingProgram, "posOffset");
   glProgramUniform1i(renderingProgram, posLoc, defvalue);
   GLuint rotateLoc = glGetUniformLocation(renderingProgram, "rotateSpeed");
-  glProgramUniform1i(renderingProgram, rotateLoc, mcrt);
+  glProgramUniform1i(renderingProgram, rotateLoc, defRotationSpeed);
+  GLuint renderLoc = glGetUniformLocation(renderingProgram, "renderSteps");
+  glProgramUniform1i(renderingProgram, renderLoc, defRenderAmount);
 
   glDrawArrays(GL_TRIANGLES, 0, 3);
 };
@@ -223,9 +222,25 @@ void ImGuiDraw(GLFWwindow* window) {
     ImGui::EndPopup();
   };
 
-  // ImGui::SetCursorPos(ImVec2(100, 100));
-  ImGui::SliderInt("distance", &defvalue, -10, 20);
-  ImGui::SliderInt("rotation speed", &mcrt, 1, 16);
+  switch (menuCase) {
+    case 0:
+      ImGui::SliderInt("RenderSteps", &defRenderAmount, 1, 1500);
+      ImGui::SliderInt("Distance", &defvalue, -10, 20);
+      ImGui::SliderInt("Rotation speed", &defRotationSpeed, 1, 16);
+      break;
+    case 1:
+      ImGui::SliderInt("RenderSteps", &defRenderAmount, 1, 1500);
+      ImGui::SliderInt("zSpeed", &defvalue, -10, 20);
+      break;
+    case 2:
+      ImGui::SliderInt("RenderSteps", &defRenderAmount, 1, 1500);
+      ImGui::SliderInt("Sphere zMove", &defvalue, -10, 200);
+      break;
+    case 3:
+      ImGui::SliderInt("RenderSteps", &defRenderAmount, 1, 1500);
+    default:
+      break;
+  };
   ImGui::Text("Fps: %.3f", ImGui::GetIO().Framerate);
 
   ImGui::Render();

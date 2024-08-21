@@ -6,6 +6,7 @@ uniform int height;
 uniform int type;
 uniform int posOffset;
 uniform int rotateSpeed;
+uniform int renderSteps;
 
 float smoothUnion(float d1, float d2, float k) {
   float h = clamp(0.5 + 0.5*(d2-d1)/k, 0.0, 1.0);
@@ -141,16 +142,16 @@ void main(void) {
 
   float t = 0.;
 
-  for (int i = 0; i < 80; i++) {
+  for (int i = 0; i < renderSteps; i++) {
     vec3 p = ro + rd * t;
 
     float d = distCase(p);
 
     t += d;
 
-    col = vec3(i)/80.;
+    col = vec3(i)/(80 + renderSteps/80 * 20.0);
 
-    if (d < .0001 || t > 100.) break;
+    if (d < .0001 || t > renderSteps * 2.25) break;
   };
 
   fragColor = vec4(col, 1);
