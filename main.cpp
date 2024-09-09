@@ -270,4 +270,3 @@ int main(void) {
 
   windowTerminate(window);
 };
-
