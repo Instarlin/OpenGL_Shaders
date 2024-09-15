@@ -4,7 +4,6 @@
 #include <iostream>
 #include <functional>
 #include <windows.h>
-#include <vector>
 #include <imgui/backend/imgui_impl_glfw.h>
 #include <imgui/backend/imgui_impl_opengl3.h>
 #include <Credentials.h>

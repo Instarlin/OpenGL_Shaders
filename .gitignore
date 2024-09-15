@@ -1,5 +1,6 @@
 *.exe
 .vscode
+.cache
 
 build/*
 glsl/reference
