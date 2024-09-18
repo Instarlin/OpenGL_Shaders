@@ -87,6 +87,8 @@ void main(void) {
     float d = map(p);
 
     if (d < .001) {
+      float distanceInside = 0.0;
+      bool inside = false; 
       float dif = clamp((d - map(p + .12*sundir))/.25, .1, 1. );
       vec3 lin = vec3(.65, .65, .75)*1.1 + .8*vec3(.9, .6, .3)*dif;
       vec3 op = p;

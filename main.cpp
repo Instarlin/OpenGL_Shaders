@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <functional>
+#include <string>
 #include <windows.h>
 #include <imgui/backend/imgui_impl_glfw.h>
 #include <imgui/backend/imgui_impl_opengl3.h>
@@ -14,7 +15,7 @@ using KeyCallback = std::function<void(GLFWwindow*, int, int, int, int)>;
 #define IMGUI_IMPL_OPENGL_LOADER_GLEW
 #define numVAOs 1
 
-const int width = 1920, height = 1080;
+const int width = 600, height = 450;
 const char* vertexPath = VPATH;
 const char* fragmentPath = FPATH;
 GLuint renderingProgram, fShader, vShader, vao[numVAOs];
@@ -23,32 +24,32 @@ float x = 0.0f, t = 0.0f, inc = 0.01f, tinc = 0.02f;
 bool is_1_down, is_2_down, is_3_down, is_left_ctrl_down, is_r_down;
 
 string getSystemPowerInfo() {
-    SYSTEM_POWER_STATUS sps;
-    if(!GetSystemPowerStatus(&sps)) return "Problems with detecting power info";
+  SYSTEM_POWER_STATUS sps;
+  if(!GetSystemPowerStatus(&sps)) return "Problems with detecting power info";
 
-    switch (sps.BatteryFlag) {
-    case 1:
-        return "High level";
-    case 2:
-        return "Low level";
-    case 4:
-        return "Critical level";
-    case 8:
-        return "Charging";
-    case 128:
-        return "No battery";
-    case 255:
-    default:
-        return "Unknown status";
-    }
+  switch (sps.BatteryFlag) {
+  case 1:
+    return "High level";
+  case 2:
+    return "Low level";
+  case 4:
+    return "Critical level";
+  case 8:
+    return "Charging";
+  case 128:
+    return "No battery";
+  case 255:
+  default:
+    return "Unknown status";
+  }
 };
 
 void getOpenGLVersionInfo() {
-    cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
-    cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
-    cout << "Version: " << glGetString(GL_VERSION) << endl;
-    cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
-    cout << "Battery status: " << getSystemPowerInfo() << endl;
+  cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
+  cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
+  cout << "Version: " << glGetString(GL_VERSION) << endl;
+  cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
+  cout << "Battery status: " << getSystemPowerInfo() << endl;
 };
 
 void windowTerminate(GLFWwindow* window) {
@@ -61,17 +62,22 @@ void windowTerminate(GLFWwindow* window) {
   exit(EXIT_SUCCESS);
 };
 
-string readShaderSource(const char* filePath, const char* type) {
-    string content;
-    ifstream fileStream(filePath);
-    if (!fileStream.is_open()) {cout << "Failed to open " << type << " shader" << endl;}
-    string line = "";
-    while (!fileStream.eof()) {
-        getline(fileStream, line);
-        content.append(line + "\n");
-    }
-    fileStream.close();
-    return content;
+string readShaderSource(const std::string& filepath) {
+  std::ifstream file(filepath, std::ios::ate | std::ios::binary);
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open file: " + filepath);
+  };
+
+  size_t fileSize = static_cast<size_t>(file.tellg());
+  std::vector<char> buffer(fileSize);
+
+  file.seekg(0);
+  file.read(buffer.data(), fileSize);
+  file.close();
+
+  std::string fileContent(buffer.begin(), buffer.end());
+
+  return fileContent;
 };
 
 GLuint createShader(const char* glslCode, GLenum type) {
@@ -96,8 +102,8 @@ void printProgramLog(int prog) {
 
 GLuint createShaderProgram(int resetShader) {
     if (resetShader == 1) glDeleteProgram(renderingProgram);
-    string vertexShaderStr = readShaderSource(vertexPath, "Vertex");
-    string fragmentShaderStr = readShaderSource(fragmentPath, "Fragment");
+    string vertexShaderStr = readShaderSource(static_cast<std::string>(vertexPath));
+    string fragmentShaderStr = readShaderSource(static_cast<std::string>(fragmentPath));
     const char* vertexShader = vertexShaderStr.c_str();
     const char* fshaderSource = fragmentShaderStr.c_str();
 
@@ -254,7 +260,7 @@ int main(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_RESIZABLE, true);
-  GLFWwindow* window = glfwCreateWindow(width, height, "3D Scene", glfwGetPrimaryMonitor(), NULL);
+  GLFWwindow* window = glfwCreateWindow(width, height, "3D Scene", nullptr, nullptr);
 
   Init(window);
 
