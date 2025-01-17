@@ -15,7 +15,8 @@
 
 using namespace std;
 
-static void GLErrorCheck(const char* msg) {
+static void GLErrorCheck(const char* msg) 
+{
   GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
     std::cerr << "OpenGL error (" << msg << "): 0x" << std::hex << err << std::dec << "\n";
@@ -49,14 +50,16 @@ struct AppData {
   bool  isLeftCtrlDown;
 };
 
-static void printOpenGLVersionInfo() {
+static void printOpenGLVersionInfo() 
+{
   cout << "Vendor:   " << glGetString(GL_VENDOR) << endl;
   cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
   cout << "Version:  " << glGetString(GL_VERSION) << endl;
   cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
 }
 
-static void windowTerminate(GLFWwindow* window) {
+static void windowTerminate(GLFWwindow* window) 
+{
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
@@ -66,10 +69,11 @@ static void windowTerminate(GLFWwindow* window) {
   exit(EXIT_SUCCESS);
 }
 
-static std::string readShaderSource(const std::string& filepath) {
+static std::string readShaderSource(const std::string& filepath) 
+{
   std::ifstream file(filepath, std::ios::ate | std::ios::binary);
   if (!file.is_open()) {
-      throw std::runtime_error("Failed to open file: " + filepath);
+    throw std::runtime_error("Failed to open file: " + filepath);
   }
 
   size_t fileSize = static_cast<size_t>(file.tellg());
@@ -82,14 +86,16 @@ static std::string readShaderSource(const std::string& filepath) {
   return std::string(buffer.begin(), buffer.end());
 }
 
-static GLuint createShader(const char* glslCode, GLenum type) {
+static GLuint createShader(const char* glslCode, GLenum type) 
+{
   GLuint shader = glCreateShader(type);
   glShaderSource(shader, 1, &glslCode, nullptr);
   glCompileShader(shader);
   return shader;
 }
 
-static void printProgramLog(GLuint prog) {
+static void printProgramLog(GLuint prog) 
+{
   int len = 0;
   glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
   if (len > 0) {
@@ -130,39 +136,37 @@ static GLuint createShaderProgram(AppData& data, int resetShader)
   return shaderProgram;
 }
 
-// GLFW callbacks – retrieve AppData via glfwGetWindowUserPointer
-static void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+// GLFW callbacks
+static void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 {
-    AppData* data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
-    if (!data) return;
+  AppData* data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
+  if (!data) return;
 
-    // Track left ctrl
-    if (key == GLFW_KEY_LEFT_CONTROL) {
-        data->isLeftCtrlDown = (action == GLFW_PRESS);
-    }
+  if (key == GLFW_KEY_LEFT_CONTROL) {
+    data->isLeftCtrlDown = (action == GLFW_PRESS);
+  }
 
-    if (data->isLeftCtrlDown) {
-        switch (key) {
-        case GLFW_KEY_R:
-            // Recreate shader program
-            data->renderingProgram = createShaderProgram(*data, 1);
-            break;
-        case GLFW_KEY_1:
-            data->menuCase = 0;
-            break;
-        case GLFW_KEY_2:
-            data->menuCase = 1;
-            break;
-        case GLFW_KEY_3:
-            data->menuCase = 2;
-            break;
-        case GLFW_KEY_4:
-            data->menuCase = 3;
-            break;
-        default:
-            break;
-        }
+  if (data->isLeftCtrlDown) {
+    switch (key) {
+    case GLFW_KEY_R:
+      data->renderingProgram = createShaderProgram(*data, 1);
+      break;
+    case GLFW_KEY_1:
+      data->menuCase = 0;
+      break;
+    case GLFW_KEY_2:
+      data->menuCase = 1;
+      break;
+    case GLFW_KEY_3:
+      data->menuCase = 2;
+      break;
+    case GLFW_KEY_4:
+      data->menuCase = 3;
+      break;
+    default:
+      break;
     }
+  }
 }
 
 static void glfwScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
@@ -242,8 +246,8 @@ static void Draw(AppData& data, GLFWwindow* window, double currentTime)
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
-static void ImGuiDraw(AppData& data, GLFWwindow* window) {
-
+static void ImGuiDraw(AppData& data, GLFWwindow* window) 
+{
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
@@ -294,7 +298,8 @@ static void ImGuiDraw(AppData& data, GLFWwindow* window) {
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-int main(void) {
+int main(void) 
+{
   if (!glfwInit()) {
     exit(EXIT_FAILURE);
   }
