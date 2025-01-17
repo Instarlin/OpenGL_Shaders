@@ -15,41 +15,19 @@ using KeyCallback = std::function<void(GLFWwindow*, int, int, int, int)>;
 #define IMGUI_IMPL_OPENGL_LOADER_GLEW
 #define numVAOs 1
 
-const int width = 600, height = 450;
+const int width = WIDTH, height = HEIGHT;
 const char* vertexPath = VPATH;
 const char* fragmentPath = FPATH;
 GLuint renderingProgram, fShader, vShader, vao[numVAOs];
 int menuCase = 0, defvalue = 0, defRotationSpeed = 12, defRenderAmount = 80;
 float x = 0.0f, t = 0.0f, inc = 0.01f, tinc = 0.02f;
-bool is_1_down, is_2_down, is_3_down, is_left_ctrl_down, is_r_down;
-
-string getSystemPowerInfo() {
-  SYSTEM_POWER_STATUS sps;
-  if(!GetSystemPowerStatus(&sps)) return "Problems with detecting power info";
-
-  switch (sps.BatteryFlag) {
-  case 1:
-    return "High level";
-  case 2:
-    return "Low level";
-  case 4:
-    return "Critical level";
-  case 8:
-    return "Charging";
-  case 128:
-    return "No battery";
-  case 255:
-  default:
-    return "Unknown status";
-  }
-};
+bool is_left_ctrl_down;
 
 void getOpenGLVersionInfo() {
   cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
   cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
   cout << "Version: " << glGetString(GL_VERSION) << endl;
   cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl;
-  cout << "Battery status: " << getSystemPowerInfo() << endl;
 };
 
 void windowTerminate(GLFWwindow* window) {

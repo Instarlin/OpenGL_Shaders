@@ -76,10 +76,11 @@ float distCase(vec3 p) {
       q = p;
 
       q.yz += time/4;
-      q.z += time * posOffset;
+      q.x += time/5;
+      // q.z += time * posOffset;
       q = fract(q) - .5;
 
-      size = vec3(.15);
+      size = vec3(1.2);
       spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
       sphere = sdSphere(p - spherePosition, .5);
 
@@ -99,7 +100,7 @@ float distCase(vec3 p) {
 
       ground = p.y + .75;
 
-      return smoothUnion(ground, smoothUnion(box, sphere, .4), .2);
+      return smoothUnion(box, sphere, .4);
     case 2: 
       q = p;
       q.yz += time/4;
@@ -136,7 +137,7 @@ float distCase(vec3 p) {
 void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
 
-  vec3 ro = vec3(0, 0, -3 - posOffset);         // origin
+  vec3 ro = vec3(0.0, -0.0, -3 - posOffset);         // origin
   vec3 rd = normalize(vec3(uv, 1));             // direction
   vec3 col = vec3(0);                           // final color
 
