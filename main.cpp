@@ -308,7 +308,7 @@ int main(void)
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Scene", nullptr, nullptr);
+  GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Scene", glfwGetPrimaryMonitor(), nullptr);
   if (!window) {
     glfwTerminate();
     return EXIT_FAILURE;
