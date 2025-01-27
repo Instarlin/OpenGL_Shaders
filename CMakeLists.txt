@@ -4,12 +4,11 @@ project(3DSceneGLFW VERSION 1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
-
-include_directories(./include)
-include_directories(./include/imgui)
-include_directories(./include/imgui/backends)
 
 set(SOURCES
     main.cpp
@@ -23,15 +22,17 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME}
-    glew32.lib
-    glfw3.lib
-    opengl32.lib
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ./include
+    ./include/imgui
+    ./include/imgui/backends
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
+
+find_package(glfw3 REQUIRED)
+find_library(GLEW_LIBRARY glew32 PATHS ${GLEW_LIBRARY_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE glfw ${GLEW_LIBRARY} opengl32)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

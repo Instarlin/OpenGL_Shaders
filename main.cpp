@@ -15,15 +15,29 @@
 
 using namespace std;
 
-static void GLErrorCheck(const char* msg) 
-{
-  GLenum err = glGetError();
-  if (err != GL_NO_ERROR) {
-    std::cerr << "OpenGL error (" << msg << "): 0x" << std::hex << err << std::dec << "\n";
-  }
-}
-
 constexpr int NUM_VAOS = 1;
+
+struct Uniforms {
+  GLuint offset;
+  GLuint time;
+  GLuint width;
+  GLuint height;
+  GLuint type;
+  GLuint pos;
+  GLuint rotate;
+  GLuint render;
+
+  void init(GLuint program) {
+    offset = glGetUniformLocation(program, "offset");
+    time = glGetUniformLocation(program, "time");
+    width = glGetUniformLocation(program, "width");
+    height = glGetUniformLocation(program, "height");
+    type = glGetUniformLocation(program, "type");
+    pos = glGetUniformLocation(program, "posOffset");
+    rotate = glGetUniformLocation(program, "rotateSpeed");
+    render = glGetUniformLocation(program, "renderSteps");
+  }
+};
 
 struct AppData {
   int width;
@@ -48,6 +62,8 @@ struct AppData {
   float tinc;
 
   bool  isLeftCtrlDown;
+
+  Uniforms uniforms;
 };
 
 static void printOpenGLVersionInfo() 
@@ -136,7 +152,11 @@ static GLuint createShaderProgram(AppData& data, int resetShader)
   return shaderProgram;
 }
 
-// GLFW callbacks
+void initializeUniforms(AppData& data) 
+{
+  data.uniforms.init(data.renderingProgram);
+}
+
 static void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 {
   AppData* data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
@@ -188,6 +208,7 @@ static void Init(AppData& data, GLFWwindow* window)
   printOpenGLVersionInfo();
 
   data.renderingProgram = createShaderProgram(data, 0);
+  initializeUniforms(data);
 
   glGenVertexArrays(NUM_VAOS, data.vao);
   glBindVertexArray(data.vao[0]);
@@ -196,7 +217,6 @@ static void Init(AppData& data, GLFWwindow* window)
   glfwSetKeyCallback(window, glfwKeyCallback);
   glfwSetScrollCallback(window, glfwScrollCallback);
 
-  // Setup ImGui
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); 
@@ -219,29 +239,14 @@ static void Draw(AppData& data, GLFWwindow* window, double currentTime)
   data.x += data.inc;
   data.t += data.tinc;
 
-  GLuint offsetLoc = glGetUniformLocation(data.renderingProgram, "offset");
-  glProgramUniform1f(data.renderingProgram, offsetLoc, data.x);
-
-  GLuint timeLoc = glGetUniformLocation(data.renderingProgram, "time");
-  glProgramUniform1f(data.renderingProgram, timeLoc, data.t);
-
-  GLuint widthLoc = glGetUniformLocation(data.renderingProgram, "width");
-  glProgramUniform1i(data.renderingProgram, widthLoc, data.width);
-
-  GLuint heightLoc = glGetUniformLocation(data.renderingProgram, "height");
-  glProgramUniform1i(data.renderingProgram, heightLoc, data.height);
-
-  GLuint typeLoc = glGetUniformLocation(data.renderingProgram, "type");
-  glProgramUniform1i(data.renderingProgram, typeLoc, data.menuCase);
-
-  GLuint posLoc = glGetUniformLocation(data.renderingProgram, "posOffset");
-  glProgramUniform1i(data.renderingProgram, posLoc, data.defValue);
-
-  GLuint rotateLoc = glGetUniformLocation(data.renderingProgram, "rotateSpeed");
-  glProgramUniform1i(data.renderingProgram, rotateLoc, data.defRotationSpeed);
-
-  GLuint renderLoc = glGetUniformLocation(data.renderingProgram, "renderSteps");
-  glProgramUniform1i(data.renderingProgram, renderLoc, data.defRenderAmount);
+  glProgramUniform1f(data.renderingProgram, data.uniforms.offset, data.x);
+  glProgramUniform1f(data.renderingProgram, data.uniforms.time, data.t);
+  glProgramUniform1i(data.renderingProgram, data.uniforms.width, data.width);
+  glProgramUniform1i(data.renderingProgram, data.uniforms.height, data.height);
+  glProgramUniform1i(data.renderingProgram, data.uniforms.type, data.menuCase);
+  glProgramUniform1i(data.renderingProgram, data.uniforms.pos, data.defValue);
+  glProgramUniform1i(data.renderingProgram, data.uniforms.rotate, data.defRotationSpeed);
+  glProgramUniform1i(data.renderingProgram, data.uniforms.render, data.defRenderAmount);
 
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -290,7 +295,6 @@ static void ImGuiDraw(AppData& data, GLFWwindow* window)
 
   ImGui::Text("Fps: %.3f", ImGui::GetIO().Framerate);
 
-  // Render
   ImGui::Render();
   int display_w, display_h;
   glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -332,7 +336,6 @@ int main(void)
   data.tinc             = 0.02f;
   data.isLeftCtrlDown   = false;
 
-  // Make the struct accessible in GLFW callbacks
   glfwSetWindowUserPointer(window, &data);
 
   Init(data, window);
