@@ -4,9 +4,11 @@ uniform float time;
 uniform int width;
 uniform int height;
 uniform int type;
-uniform int posOffset;
+uniform float posOffset;
 uniform int rotateSpeed;
 uniform int renderSteps;
+uniform float mouseX;
+uniform float mouseY;
 
 float smoothUnion(float d1, float d2, float k) {
   float h = clamp(0.5 + 0.5*(d2-d1)/k, 0.0, 1.0);
@@ -50,10 +52,38 @@ mat2 rot(float r) {
   return mat2(cos(r), sin(r), -sin(r), cos(r));
 };
 
+float rotationScale = 0.01;
+float angleY = -mouseX * rotationScale;
+float angleX = -mouseY * rotationScale;
+
+mat3 rotX = mat3(
+  1.0,       0.0,        0.0,
+  0.0, cos(angleX), -sin(angleX),
+  0.0, sin(angleX),  cos(angleX)
+);
+
+mat3 rotY = mat3(
+  cos(angleY),  0.0, sin(angleY),
+  0.0,    1.0,      0.0,
+  -sin(angleY), 0.0, cos(angleY)
+);
+
+mat3 rotationMatrix = rotY * rotX;
+
 float distCase(vec3 p) {
   float sphere, box, ground; vec3 q, size, spherePosition, boxPosition;
+
   switch (type) {
-    case 0: 
+    case 0:
+
+      // p.xy = (mat3(
+      //           1.0, 0.0, 0.0,
+      //           0.0, 1.0, 0.0,
+      //           -mouseX / 50.0, mouseY / 50.0, 1.0
+      //         ) * vec3(p.xy, 1.0)).xy;
+
+      p = rotationMatrix * p;
+      
       p.xz *= rot(time/rotateSpeed);
       p.yz *= rot(time/rotateSpeed);
       // p.xy = p.xy - posOffset;
@@ -75,12 +105,16 @@ float distCase(vec3 p) {
     case 1: 
       q = p;
 
-      q.yz += time/4;
-      q.x += time/5;
-      // q.z += time * posOffset;
+      // 0.02 * 120 
+      if (sin(time * .5) > 0) {
+        q.z += mod(time, 10.0) * .1;
+      } else {
+        q.x += mod(time, 6.0) * .1;
+      }
+      
       q = fract(q) - .5;
 
-      size = vec3(1.2);
+      size = vec3(.8);
       spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
       sphere = sdSphere(p - spherePosition, .5);
 
@@ -98,8 +132,6 @@ float distCase(vec3 p) {
         box = max(box, -cb);
       };
 
-      ground = p.y + .75;
-
       return smoothUnion(box, sphere, .4);
     case 2: 
       q = p;
@@ -107,7 +139,7 @@ float distCase(vec3 p) {
       q = fract(q) - .5;
 
       spherePosition = vec3(-1.5*sin(time/4), 0.25, -1.5*cos(time/4));
-      // spherePosition.z = spherePosition.z + posOffset;
+      spherePosition.z = spherePosition.z + posOffset;
       sphere = sdSphere(p - spherePosition, .5);
 
       boxPosition = vec3(0, 0, 0);
@@ -137,9 +169,9 @@ float distCase(vec3 p) {
 void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
 
-  vec3 ro = vec3(0.0, -0.0, -3 - posOffset);         // origin
-  vec3 rd = normalize(vec3(uv, 1));             // direction
-  vec3 col = vec3(0);                           // final color
+  vec3 ro = vec3(0.0, 0.0, -3.0 - posOffset);   // origin
+  vec3 rd = normalize(vec3(uv, 1));              // direction
+  vec3 col = vec3(0);                             // final color
 
   float t = 0.;
 

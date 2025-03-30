@@ -1,5 +1,7 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+// #include <GL/glew.h>
+// #include <GLFW/glfw3.h>
+#include <glew.h>
+#include <glfw3.h>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -7,7 +9,6 @@
 #include <stdexcept>
 #include <windows.h>
 
-#include <imgui/imgui.h>
 #include <imgui/backend/imgui_impl_glfw.h>
 #include <imgui/backend/imgui_impl_opengl3.h>
 
@@ -23,9 +24,11 @@ struct Uniforms {
   GLuint width;
   GLuint height;
   GLuint type;
-  GLuint pos;
+  GLfloat pos;
   GLuint rotate;
   GLuint render;
+  GLfloat mouseX;
+  GLfloat mouseY;
 
   void init(GLuint program) {
     offset = glGetUniformLocation(program, "offset");
@@ -36,6 +39,8 @@ struct Uniforms {
     pos = glGetUniformLocation(program, "posOffset");
     rotate = glGetUniformLocation(program, "rotateSpeed");
     render = glGetUniformLocation(program, "renderSteps");
+    mouseX = glGetUniformLocation(program, "mouseX");
+    mouseY = glGetUniformLocation(program, "mouseY");
   }
 };
 
@@ -52,7 +57,7 @@ struct AppData {
   GLuint vao[NUM_VAOS];
 
   int   menuCase;
-  int   defValue;
+  float defValue;
   int   defRotationSpeed;
   int   defRenderAmount;
 
@@ -62,6 +67,12 @@ struct AppData {
   float tinc;
 
   bool  isLeftCtrlDown;
+  bool  isLeftMouseDown;
+
+  double mouseX, mouseY;
+  double dx, dy;
+  double offsetX, offsetY;
+  double totalX, totalY;
 
   Uniforms uniforms;
 };
@@ -194,7 +205,42 @@ static void glfwScrollCallback(GLFWwindow* window, double xoffset, double yoffse
   AppData* data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
   if (!data) return;
 
-  data->defValue += static_cast<int>(yoffset);
+  data->defValue += static_cast<float>(yoffset);
+}
+
+static void glfwMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) 
+{
+  AppData* data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
+  if (!data) return;
+
+  if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+    if (action == GLFW_PRESS) {
+      data->isLeftMouseDown = true;
+      glfwGetCursorPos(window, &data->mouseX, &data->mouseY);
+    } else if (action == GLFW_RELEASE) {
+      data->isLeftMouseDown = false;
+
+      data->offsetX += data->dx;
+      data->offsetY += data->dy;
+
+      data->dx = 0;
+      data->dy = 0;
+    }
+  }
+}
+
+static void glfwCursorPosCallback(GLFWwindow* window, double xpos, double ypos) 
+{
+  AppData* data = reinterpret_cast<AppData*>(glfwGetWindowUserPointer(window));
+  if (!data) return;
+
+  if (data->isLeftMouseDown) {
+    data->dx = xpos - data->mouseX;
+    data->dy = ypos - data->mouseY;
+
+    data->totalX = data->offsetX + data->dx;
+    data->totalY = data->offsetY + data->dy;
+  }
 }
 
 static void Init(AppData& data, GLFWwindow* window)
@@ -216,6 +262,8 @@ static void Init(AppData& data, GLFWwindow* window)
   glfwSwapInterval(1);
   glfwSetKeyCallback(window, glfwKeyCallback);
   glfwSetScrollCallback(window, glfwScrollCallback);
+  glfwSetMouseButtonCallback(window, glfwMouseButtonCallback);
+  glfwSetCursorPosCallback(window, glfwCursorPosCallback);
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -244,9 +292,11 @@ static void Draw(AppData& data, GLFWwindow* window, double currentTime)
   glProgramUniform1i(data.renderingProgram, data.uniforms.width, data.width);
   glProgramUniform1i(data.renderingProgram, data.uniforms.height, data.height);
   glProgramUniform1i(data.renderingProgram, data.uniforms.type, data.menuCase);
-  glProgramUniform1i(data.renderingProgram, data.uniforms.pos, data.defValue);
+  glProgramUniform1f(data.renderingProgram, data.uniforms.pos, data.defValue);
   glProgramUniform1i(data.renderingProgram, data.uniforms.rotate, data.defRotationSpeed);
   glProgramUniform1i(data.renderingProgram, data.uniforms.render, data.defRenderAmount);
+  glProgramUniform1f(data.renderingProgram, data.uniforms.mouseX, data.totalX);
+  glProgramUniform1f(data.renderingProgram, data.uniforms.mouseY, data.totalY);
 
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -275,25 +325,28 @@ static void ImGuiDraw(AppData& data, GLFWwindow* window)
   switch (data.menuCase) {
   case 0:
     ImGui::SliderInt("RenderSteps",    &data.defRenderAmount, 1, 1500);
-    ImGui::SliderInt("Distance",       &data.defValue,       -10, 20);
+    ImGui::SliderFloat("Distance",       &data.defValue,       -10, 50);
     ImGui::SliderInt("Rotation speed", &data.defRotationSpeed, 1, 16);
+    ImGui::SliderFloat("Time", &data.t, 0, 2000000);
     break;
   case 1:
     ImGui::SliderInt("RenderSteps", &data.defRenderAmount, 1, 1500);
-    ImGui::SliderInt("zSpeed",      &data.defValue,       -10, 20);
+    ImGui::SliderFloat("zSpeed",      &data.defValue,       -10, 20);
     break;
   case 2:
     ImGui::SliderInt("RenderSteps",    &data.defRenderAmount, 1, 1500);
-    ImGui::SliderInt("Sphere zMove",   &data.defValue,       -10, 200);
+    ImGui::SliderFloat("Sphere zMove",   &data.defValue,       -10, 200);
     break;
   case 3:
     ImGui::SliderInt("RenderSteps", &data.defRenderAmount, 1, 1500);
+    ImGui::SliderFloat("Time", &data.t, 0, 50000000);
     break;
   default:
     break;
   }
 
-  ImGui::Text("Fps: %.3f", ImGui::GetIO().Framerate);
+  ImGui::Text("Mouse offset: (%.1f, %.1f)", data.dx, data.dy);
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
   ImGui::Render();
   int display_w, display_h;
@@ -302,16 +355,25 @@ static void ImGuiDraw(AppData& data, GLFWwindow* window)
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void error_callback(int error, const char *description) {
+  fprintf(stderr, "GLFW Error: %s\n", description);
+  exit(1);
+}
+
 int main(void) 
 {
+  std::cout << "Initializing GLFW..." << std::endl;
+  glfwSetErrorCallback(error_callback);
   if (!glfwInit()) {
     exit(EXIT_FAILURE);
   }
 
+  std::cout << "Initializing GLEW..." << std::endl;
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
+  std::cout << "Creating GLFW window..." << std::endl;
   GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "3D Scene", glfwGetPrimaryMonitor(), nullptr);
   if (!window) {
     glfwTerminate();
@@ -323,9 +385,6 @@ int main(void)
   data.height           = HEIGHT;
   data.vertexPath       = VPATH;
   data.fragmentPath     = FPATH;
-  data.renderingProgram = 0;
-  data.vShader          = 0;
-  data.fShader          = 0;
   data.menuCase         = 0;
   data.defValue         = 0;
   data.defRotationSpeed = 12;
@@ -335,6 +394,13 @@ int main(void)
   data.inc              = 0.01f;
   data.tinc             = 0.02f;
   data.isLeftCtrlDown   = false;
+  data.isLeftMouseDown  = false;
+  data.mouseX           = 0.0f;
+  data.mouseY           = 0.0f;
+  data.dx               = 0.0f;
+  data.dy               = 0.0f;
+  data.offsetX          = 0.0f;
+  data.offsetY          = 0.0f;
 
   glfwSetWindowUserPointer(window, &data);
 

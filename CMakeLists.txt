@@ -26,9 +26,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ./include
     ./include/imgui
     ./include/imgui/backends
+    # D:/msys64/mingw64/include
 )
 
-target_link_options(${PROJECT_NAME} PRIVATE -mwindows)
+target_link_options(${PROJECT_NAME} PRIVATE)
 
 find_package(glfw3 REQUIRED)
 find_library(GLEW_LIBRARY glew32 PATHS ${GLEW_LIBRARY_DIR})
