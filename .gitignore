@@ -2,8 +2,8 @@
 .vscode
 .cache
 
-include/*
-build/*
-glsl/reference
+.venv/
+build/
+web/
 
 Credentials.h

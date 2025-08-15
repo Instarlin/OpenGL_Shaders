@@ -1,0 +1,12 @@
+[requires]
+glfw/3.4
+glew/2.2.0
+imgui/1.92.0-docking
+nlohmann_json/3.12.0
+
+[generators]
+CMakeToolchain
+CMakeDeps
+
+[layout]
+cmake_layout
