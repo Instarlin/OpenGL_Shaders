@@ -7,34 +7,34 @@
 namespace rendering {
 
 /**
- * Основной рендерер приложения
+ * Main renderer class
  */
 class Renderer {
 public:
     /**
-     * Инициализирует рендерер
-     * @param state Состояние приложения
-     * @param window Окно GLFW
+     * Initializes the renderer
+     * @param state Application state
+     * @param window GLFW window
      */
     static void init(state::AppState& state, GLFWwindow* window);
     
     /**
-     * Выполняет рендеринг кадра
-     * @param state Состояние приложения
-     * @param window Окно GLFW
-     * @param currentTime Текущее время
+     * Renders a frame
+     * @param state Application state
+     * @param window GLFW window
+     * @param currentTime Current time
      */
     static void render(state::AppState& state, GLFWwindow* window, double currentTime);
     
     /**
-     * Обновляет uniform переменные
-     * @param state Состояние приложения
+     * Updates uniform variables
+     * @param state Application state
      */
     static void updateUniforms(state::AppState& state);
     
     /**
-     * Очищает ресурсы рендерера
-     * @param state Состояние приложения
+     * Cleans up resources
+     * @param state Application state
      */
     static void shutdown(state::AppState& state);
 

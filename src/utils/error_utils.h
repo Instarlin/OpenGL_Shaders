@@ -5,26 +5,26 @@
 namespace utils {
 
 /**
- * Проверяет ошибки OpenGL и выводит их в консоль
- * @param context Контекст для сообщения об ошибке
- * @return true если есть ошибка, false иначе
+ * Checks for OpenGL errors and prints them to the console
+ * @param context Context for error message
+ * @return true if there is an error, false otherwise
  */
 bool checkOpenGLError(const std::string& context = "");
 
 /**
- * Выводит информацию о версии OpenGL
+ * Prints OpenGL version information
  */
 void printOpenGLVersionInfo();
 
 /**
- * Выводит лог программы OpenGL
- * @param program ID программы OpenGL
+ * Prints OpenGL program log
+ * @param program ID of the OpenGL program
  */
 void printProgramLog(unsigned int program);
 
 /**
- * Выводит лог шейдера OpenGL
- * @param shader ID шейдера OpenGL
+ * Prints OpenGL shader log
+ * @param shader ID of the OpenGL shader
  */
 void printShaderLog(unsigned int shader);
 

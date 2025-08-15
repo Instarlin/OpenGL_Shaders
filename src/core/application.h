@@ -8,54 +8,54 @@
 namespace core {
 
 /**
- * Основной класс приложения
+ * Main application class
  */
 class Application {
 public:
     /**
-     * Конструктор
+     * Constructor
      */
     Application();
     
     /**
-     * Деструктор
+     * Destructor
      */
     ~Application();
     
     /**
-     * Инициализирует приложение
-     * @return true если инициализация успешна
+     * Initializes the application
+     * @return true if initialization is successful
      */
     bool init();
     
     /**
-     * Запускает главный цикл приложения
+     * Runs the main loop of the application
      */
     void run();
     
     /**
-     * Завершает работу приложения
+     * Shuts down the application
      */
     void shutdown();
 
 private:
     /**
-     * Обрабатывает события
+     * Processes events
      */
     void processEvents();
     
     /**
-     * Обновляет состояние приложения
+     * Updates the state of the application
      */
     void update();
     
     /**
-     * Рендерит кадр
+     * Renders a frame
      */
     void render();
     
     /**
-     * Проверяет изменения конфигурации
+     * Checks for configuration changes
      */
     void checkConfigChanges();
 

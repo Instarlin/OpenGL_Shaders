@@ -7,38 +7,38 @@
 namespace rendering {
 
 /**
- * Менеджер шейдеров
+ * Shader manager class
  */
 class ShaderManager {
 public:
     /**
-     * Создает шейдер из исходного кода
-     * @param glslCode Исходный код шейдера
-     * @param type Тип шейдера (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER)
-     * @return ID созданного шейдера
+     * Creates a shader from source code
+     * @param glslCode Shader source code
+     * @param type Shader type (GL_VERTEX_SHADER, GL_FRAGMENT_SHADER)
+     * @return ID of the created shader
      */
     static GLuint createShader(const char* glslCode, GLenum type);
     
     /**
-     * Создает программу шейдеров из файлов
-     * @param vertexPath Путь к vertex шейдеру
-     * @param fragmentPath Путь к fragment шейдеру
-     * @return ID созданной программы
+     * Creates a shader program from files
+     * @param vertexPath Path to vertex shader
+     * @param fragmentPath Path to fragment shader
+     * @return ID of the created program
      */
     static GLuint createShaderProgram(const std::string& vertexPath, 
                                     const std::string& fragmentPath);
     
     /**
-     * Пересоздает программу шейдеров
-     * @param state Состояние приложения
-     * @param resetShader Флаг для пересоздания
-     * @return ID новой программы
+     * Recreates the shader program
+     * @param state Application state
+     * @param resetShader Flag to recreate
+     * @return ID of the new program
      */
     static GLuint recreateShaderProgram(state::AppState& state, int resetShader = 0);
     
     /**
-     * Инициализирует uniform переменные
-     * @param state Состояние приложения
+     * Initializes uniform variables
+     * @param state Application state
      */
     static void initializeUniforms(state::AppState& state);
 
