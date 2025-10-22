@@ -2,6 +2,7 @@
 
 #include "../state/app_state.h"
 #include "config/slider_config.h"
+#include "../settings/settings_manager.h"
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 
@@ -32,9 +33,9 @@ public:
     static void shutdown();
 
 private:
-    static config::SliderConfig config;
     static void renderContextMenu(state::AppState& state);
     static void renderMainMenu(state::AppState& state);
+    static void renderSettingsPopup(state::AppState& state);
 };
 
 } // namespace ui 

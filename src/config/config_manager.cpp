@@ -3,6 +3,13 @@
 
 namespace config {
 
+ConfigManager::ConfigManager(const std::string& configPath, const std::string& settingsPath)
+    : configPath(configPath),
+      settingsPath(settingsPath) {
+    loadConfig();
+    loadSettings();
+}
+
 void ConfigManager::loadConfig() {
     std::ifstream file(configPath);
     if (!file.is_open()) {
@@ -17,18 +24,6 @@ void ConfigManager::loadConfig() {
         file.close();
         
         parseConfig(j);
-        
-        try {
-            std::filesystem::path path(configPath);
-            if (std::filesystem::exists(path)) {
-                auto currentTime = std::filesystem::last_write_time(path);
-                config.lastModified = std::chrono::system_clock::from_time_t(
-                    std::chrono::duration_cast<std::chrono::seconds>(
-                        currentTime.time_since_epoch()).count());
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Error getting file modification time: " << e.what() << std::endl;
-        }
     } catch (const json::exception& e) {
         std::cerr << "Error parsing JSON config: " << e.what() << std::endl;
         std::cout << "Creating default config..." << std::endl;
@@ -47,11 +42,6 @@ void ConfigManager::createDefaultConfig() {
         {"shaders", {
             {"vertex", "glsl/vertex.glsl"},
             {"fragment", "glsl/fragment.glsl"}
-        }},
-        {"hotReload", {
-            {"enabled", true},
-            {"configPath", "config.json"},
-            {"checkInterval", 1000}
         }},
         {"controls", {
             {"scrollSensitivity", 0.01f},
@@ -94,19 +84,6 @@ void ConfigManager::parseConfig(const json& j) {
         }
     }
 
-    if (j.contains("hotReload")) {
-        const auto& hotReload = j["hotReload"];
-        if (hotReload.contains("enabled")) {
-            config.hotReload.enabled = hotReload["enabled"];
-        }
-        if (hotReload.contains("configPath")) {
-            config.hotReload.configPath = hotReload["configPath"];
-        }
-        if (hotReload.contains("checkInterval")) {
-            config.hotReload.checkInterval = std::chrono::milliseconds(hotReload["checkInterval"]);
-        }
-    }
-
     if (j.contains("controls")) {
         const auto& controls = j["controls"];
         if (controls.contains("scrollSensitivity")) {
@@ -119,6 +96,84 @@ void ConfigManager::parseConfig(const json& j) {
               << ", fragment: " << config.shaders.fragment 
               << ", scrollSensitivity: " << config.controls.scrollSensitivity
               << std::endl;
-} 
+}
+
+void ConfigManager::loadSettings() {
+    std::ifstream file(settingsPath);
+    if (!file.is_open()) {
+        std::cout << "Settings file not found, creating default settings..." << std::endl;
+        createDefaultSettings();
+        return;
+    }
+
+    try {
+        json j;
+        file >> j;
+        file.close();
+
+        parseSettings(j);
+        std::cout << "Settings loaded from " << settingsPath << std::endl;
+    } catch (const json::exception& e) {
+        std::cerr << "Error parsing settings JSON: " << e.what() << std::endl;
+        createDefaultSettings();
+    }
+}
+
+void ConfigManager::createDefaultSettings() {
+    settingsData.reset();
+    saveSettings(settingsData);
+    std::cout << "Default settings created: " << settingsPath << std::endl;
+}
+
+void ConfigManager::parseSettings(const json& j) {
+    settingsData.reset();
+
+    if (j.contains("visual")) {
+        const auto& visual = j["visual"];
+        if (visual.contains("uiScale")) {
+            float value = visual["uiScale"];
+            if (value <= 0.0f) {
+                value = 1.0f;
+            }
+            settingsData.visual.uiScale = value;
+        }
+    }
+
+    if (j.contains("interaction")) {
+        const auto& interaction = j["interaction"];
+        if (interaction.contains("shaderAutoReload")) {
+            settingsData.interaction.shaderAutoReload = interaction["shaderAutoReload"];
+        }
+    }
+}
+
+void ConfigManager::saveSettings(const settings::Settings& settings) {
+    settingsData = settings;
+
+    // Flags are runtime-only
+    settingsData.flags.openSettings = false;
+    settingsData.flags.closeSettings = false;
+    settingsData.flags.settingsVisible = false;
+    settingsData.flags.dirty = false;
+
+    json j = {
+        {"visual", {
+            {"uiScale", settingsData.visual.uiScale}
+        }},
+        {"interaction", {
+            {"shaderAutoReload", settingsData.interaction.shaderAutoReload}
+        }}
+    };
+
+    std::ofstream file(settingsPath);
+    if (!file.is_open()) {
+        std::cerr << "Failed to write settings file: " << settingsPath << std::endl;
+        return;
+    }
+
+    file << j.dump(4);
+    file.close();
+    std::cout << "Settings saved to " << settingsPath << std::endl;
+}
 
 } // namespace config

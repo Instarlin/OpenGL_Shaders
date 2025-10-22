@@ -4,6 +4,7 @@
 #include "../state/app_state.h"
 
 #include <GLFW/glfw3.h>
+#include <filesystem>
 
 namespace core {
 
@@ -55,9 +56,14 @@ private:
     void render();
     
     /**
-     * Checks for configuration changes
+     * Updates shader auto-reload state
      */
-    void checkConfigChanges();
+    void updateShaderWatch();
+
+    /**
+     * Persists settings when they change
+     */
+    void persistSettings();
 
 private:
     struct {
@@ -65,6 +71,11 @@ private:
         state::AppState state;
         config::ConfigManager *configManager = nullptr;
         bool initialized = false;
+        struct {
+            bool initialized = false;
+            std::filesystem::file_time_type vertexTimestamp{};
+            std::filesystem::file_time_type fragmentTimestamp{};
+        } shaderWatch;
     } data;
 };
 

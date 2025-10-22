@@ -18,10 +18,12 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
         data->inputState.isLeftCtrlDown = (action == GLFW_PRESS);
     }
 
-    if (data->inputState.isLeftCtrlDown) {
+    if (data->inputState.isLeftCtrlDown && action == GLFW_PRESS) {
         switch (key) {
             case GLFW_KEY_R:
-                data->renderState.renderingProgram = rendering::ShaderManager::recreateShaderProgram(*data, 1);
+                data->renderState.renderingProgram =
+                    rendering::ShaderManager::recreateShaderProgram(*data, 1);
+                rendering::ShaderManager::initializeUniforms(*data);
                 break;
             case GLFW_KEY_1:
                 data->renderState.menuCase = 0;
@@ -34,6 +36,13 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
                 break;
             case GLFW_KEY_4:
                 data->renderState.menuCase = 3;
+                break;
+            case GLFW_KEY_S:
+                if (data->settings.flags.settingsVisible) {
+                    data->settings.flags.closeSettings = true;
+                } else {
+                    data->settings.flags.openSettings = true;
+                }
                 break;
             default:
                 break;

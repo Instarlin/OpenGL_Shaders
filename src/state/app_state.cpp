@@ -18,6 +18,7 @@ void Uniforms::init(GLuint program) {
 void AppState::reset() {
     renderState = RenderState{};
     inputState = InputState{};
+    settings.reset();
 }
 
 } // namespace state 

@@ -9,6 +9,16 @@ warn(){ echo -e "${YELLOW}[WARN]${NC} $*"; }
 err(){ echo -e "${RED}[ERROR]${NC} $*" >&2; }
 trap 'err "Build failed at line $LINENO"' ERR
 
+usage() {
+  cat <<'EOF'
+Usage: ./build.sh [-s] [-l] [-h]
+
+  -s    Let Conan attempt to install required system packages (may prompt for sudo).
+  -l    Launch the executable automatically after a successful build.
+  -h    Show this help and exit.
+EOF
+}
+
 # -------- config --------
 BUILD_TYPE="${BUILD_TYPE:-Release}"     # override: BUILD_TYPE=Debug ./build.sh
 PRESET="conan-$(echo "$BUILD_TYPE" | tr '[:upper:]' '[:lower:]')"   # conan-release / conan-debug
@@ -16,6 +26,23 @@ BUILD_DIR="build/${BUILD_TYPE}"
 VENV_DIR=".venv"
 NON_INTERACTIVE="${NON_INTERACTIVE:-0}" # set to 1 to skip "Launch?" prompt
 EXECUTABLE="${EXECUTABLE:-./build/Release/3DShader}"
+SYSTEM_PACKAGES=0
+AUTO_LAUNCH=0
+
+while getopts ":shl" opt; do
+  case "${opt}" in
+    s) SYSTEM_PACKAGES=1 ;;
+    l) AUTO_LAUNCH=1 ;;
+    h) usage; exit 0 ;;
+    \?) err "Unknown option: -${OPTARG}"; usage; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))
+if [[ $# -gt 0 ]]; then
+  err "Unexpected argument(s): $*"
+  usage
+  exit 1
+fi
 
 # CPU count (Linux/macOS)
 if command -v nproc >/dev/null 2>&1; then
@@ -76,9 +103,30 @@ mkdir -p "${BUILD_DIR}"
 
 info "Installing Conan dependencies..."
 info "(build_type=${BUILD_TYPE})"
-conan install . \
-  -s build_type="${BUILD_TYPE}" \
+if (( SYSTEM_PACKAGES )); then
+  info "Enabling Conan system package manager helpers (-S flag)."
+fi
+conan_args=(
+  .
+  -s "build_type=${BUILD_TYPE}"
   --build=missing
+)
+if (( SYSTEM_PACKAGES )); then
+  conan_args+=(
+    -c tools.system.package_manager:mode=install
+    -c tools.system.package_manager:sudo=True
+  )
+fi
+
+if ! conan install "${conan_args[@]}"; then
+  if (( SYSTEM_PACKAGES )); then
+    warn "Conan install failed even after attempting system package installation."
+  else
+    warn "Conan install failed. Missing system libraries are a common cause."
+    warn "Re-run ./build.sh with -S to let Conan try installing system dependencies automatically."
+  fi
+  exit 1
+fi
 
 info "Conan dependencies installed."
 
@@ -93,9 +141,13 @@ cmake --build --preset "${PRESET}" --parallel "${CPUS}"
 info "Build completed successfully."
 
 # -------- Run (optional) --------
-if [[ "${NON_INTERACTIVE}" -eq 0 ]]; then
+if (( AUTO_LAUNCH )); then
+  info "Auto-launching executable (${EXECUTABLE})"
+  cd build/Release
+  exec ./3DShader
+elif [[ "${NON_INTERACTIVE}" -eq 0 ]]; then
   echo -e "${GREEN}[INFO]${NC} Executable file: ${EXECUTABLE}"
-  read -r -n1 -p "Launch? [y/N] " REPLY || true
+  read -r -n1 -p "Launch? [y/n] " REPLY || true
   echo
   if [[ "${REPLY:-N}" =~ ^[Yy]$ ]]; then
     cd build/Release

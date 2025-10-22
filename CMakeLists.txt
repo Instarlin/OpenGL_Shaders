@@ -27,6 +27,11 @@ set(STATE_SOURCES
     src/state/app_state.cpp
 )
 
+set(SETTINGS_SOURCES
+    src/settings/settings_state.cpp
+    src/settings/settings_manager.cpp
+)
+
 set(RENDERING_SOURCES
     src/rendering/shader_manager.cpp
     src/rendering/renderer.cpp
@@ -48,6 +53,7 @@ set(ALL_SOURCES
     ${CONFIG_SOURCES}
     ${UTILS_SOURCES}
     ${STATE_SOURCES}
+    ${SETTINGS_SOURCES}
     ${RENDERING_SOURCES}
     ${WINDOW_SOURCES}
     ${UI_SOURCES}

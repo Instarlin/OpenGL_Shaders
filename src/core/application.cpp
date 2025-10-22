@@ -21,6 +21,8 @@ Application::~Application() {
 }
 
 void Application::shutdown() {
+    persistSettings();
+
     if (data.initialized) {
         ui::UIManager::shutdown();
         rendering::Renderer::shutdown(data.state);
@@ -65,6 +67,13 @@ bool Application::init() {
     // Passing config to input state
     data.state.inputState.scrollSensitivity = config.controls.scrollSensitivity;
 
+    // Load persisted settings
+    data.state.settings = data.configManager->getSettings();
+    data.state.settings.flags.openSettings = false;
+    data.state.settings.flags.closeSettings = false;
+    data.state.settings.flags.settingsVisible = false;
+    data.state.settings.flags.dirty = false;
+
     // Setting up callbacks, both managed with GLFW
     window::WindowManager::setupCallbacks(data.window, &data.state);
     input::InputManager::setupCallbacks(data.window, &data.state);
@@ -94,7 +103,8 @@ void Application::run() {
 
 void Application::processEvents() {
     glfwPollEvents();
-    checkConfigChanges();
+    updateShaderWatch();
+    persistSettings();
 }
 
 void Application::update() {
@@ -109,38 +119,78 @@ void Application::render() {
     ui::UIManager::render(data.state, data.window);
 }
 
-void Application::checkConfigChanges() {
-    if (data.configManager && data.configManager->checkForChanges()) {
-        const config::AppConfig& newConfig = data.configManager->getConfig();
-        
-        // Window size update
-        if (newConfig.window.width != data.state.renderState.width || 
-            newConfig.window.height != data.state.renderState.height) {
-            data.state.renderState.width = newConfig.window.width;
-            data.state.renderState.height = newConfig.window.height;
-            glfwSetWindowSize(data.window, data.state.renderState.width, data.state.renderState.height);
-            std::cout << "Window size updated to: " << data.state.renderState.width 
-                      << "x" << data.state.renderState.height << std::endl;
+void Application::updateShaderWatch() {
+    auto getTimestamp = [](const std::string& path, std::filesystem::file_time_type& outTimestamp) -> bool {
+        try {
+            std::filesystem::path shaderPath(path);
+            if (!std::filesystem::exists(shaderPath)) {
+                return false;
+            }
+            outTimestamp = std::filesystem::last_write_time(shaderPath);
+            return true;
+        } catch (const std::exception& e) {
+            std::cerr << "Shader watch error (" << path << "): " << e.what() << std::endl;
+            return false;
         }
+    };
 
-        // Shaders reload
-        if (newConfig.shaders.vertex != data.state.renderState.vertexPath || 
-            newConfig.shaders.fragment != data.state.renderState.fragmentPath) {
-            data.state.renderState.vertexPath = newConfig.shaders.vertex;
-            data.state.renderState.fragmentPath = newConfig.shaders.fragment;
-            data.state.renderState.renderingProgram = rendering::ShaderManager::recreateShaderProgram(data.state, 1);
-            std::cout << "Shaders reloaded: " << data.state.renderState.vertexPath 
-                      << ", " << data.state.renderState.fragmentPath << std::endl;
-        }
-
-        // Controls reload
-        if (newConfig.controls.scrollSensitivity != data.state.inputState.scrollSensitivity) {
-            data.state.inputState.scrollSensitivity = newConfig.controls.scrollSensitivity;
-            std::cout << "Controls reloaded: " << data.state.inputState.scrollSensitivity << std::endl;
-        }
-        
-        data.configManager->resetChangeFlag();
+    if (!data.state.settings.interaction.shaderAutoReload) {
+        data.shaderWatch.initialized = false;
+        return;
     }
+
+    if (!data.shaderWatch.initialized) {
+        std::filesystem::file_time_type vertexTime{};
+        std::filesystem::file_time_type fragmentTime{};
+        getTimestamp(data.state.renderState.vertexPath, vertexTime);
+        getTimestamp(data.state.renderState.fragmentPath, fragmentTime);
+        data.shaderWatch.vertexTimestamp = vertexTime;
+        data.shaderWatch.fragmentTimestamp = fragmentTime;
+        data.shaderWatch.initialized = true;
+        std::cout << "Shader auto-reload enabled." << std::endl;
+        return;
+    }
+
+    bool shouldReload = false;
+    std::filesystem::file_time_type vertexTime{};
+    if (getTimestamp(data.state.renderState.vertexPath, vertexTime) &&
+        vertexTime != data.shaderWatch.vertexTimestamp) {
+        data.shaderWatch.vertexTimestamp = vertexTime;
+        shouldReload = true;
+    }
+
+    std::filesystem::file_time_type fragmentTime{};
+    if (getTimestamp(data.state.renderState.fragmentPath, fragmentTime) &&
+        fragmentTime != data.shaderWatch.fragmentTimestamp) {
+        data.shaderWatch.fragmentTimestamp = fragmentTime;
+        shouldReload = true;
+    }
+
+    if (!shouldReload) {
+        return;
+    }
+
+    try {
+        data.state.renderState.renderingProgram =
+            rendering::ShaderManager::recreateShaderProgram(data.state, 1);
+        rendering::ShaderManager::initializeUniforms(data.state);
+        std::cout << "Shaders reloaded (auto-watch)." << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to reload shaders: " << e.what() << std::endl;
+    }
+}
+
+void Application::persistSettings() {
+    if (!data.configManager) {
+        return;
+    }
+
+    if (!data.state.settings.flags.dirty) {
+        return;
+    }
+
+    data.configManager->saveSettings(data.state.settings);
+    data.state.settings.flags.dirty = false;
 }
 
 } // namespace core

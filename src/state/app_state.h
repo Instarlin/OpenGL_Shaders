@@ -2,7 +2,7 @@
 
 #include <string>
 #include <GL/glew.h>
-// #include "../config/slider_config.h"
+#include "../settings/settings_state.h"
 
 namespace state {
 
@@ -31,16 +31,16 @@ struct InputState {
     bool isLeftCtrlDown = false;
     bool isLeftMouseDown = false;
     
-    double mouseX = 0.0;
-    double mouseY = 0.0;
-    double dx;
-    double dy;
+    double mouseX  = 0.0;
+    double mouseY  = 0.0;
+    double dx      = 0.0;
+    double dy      = 0.0;
     double offsetX = 0.0;
     double offsetY = 0.0;
-    double totalX;
-    double totalY;
+    double totalX  = 0.0;
+    double totalY  = 0.0;
 
-    float scrollSensitivity;
+    float scrollSensitivity = 0.0f;
 };
 
 /**
@@ -75,6 +75,7 @@ struct RenderState {
 struct AppState {
     RenderState renderState;
     InputState inputState;
+    settings::Settings settings;
     
     void reset();
 };
