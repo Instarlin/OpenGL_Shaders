@@ -30,8 +30,19 @@ GLFWwindow* WindowManager::createWindow(const WindowConfig& config) {
 
 void WindowManager::setupCallbacks(GLFWwindow* window, state::AppState* state) {
     glfwSetWindowUserPointer(window, state);
-    
+
     // Callbacks are added in input_manager
+    glfwSetFramebufferSizeCallback(
+        window, [](GLFWwindow* win, int width, int height) {
+            auto* appState =
+                reinterpret_cast<state::AppState*>(glfwGetWindowUserPointer(win));
+            if (!appState) {
+                return;
+            }
+
+            appState->renderState.width = width;
+            appState->renderState.height = height;
+        });
 }
 
 void WindowManager::terminate() {

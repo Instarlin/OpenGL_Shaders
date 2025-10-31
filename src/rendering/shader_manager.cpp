@@ -24,13 +24,13 @@ GLuint ShaderManager::createShaderProgram(const std::string& vertexPath,
     std::string vertexShaderStr = utils::readFile(vertexPath);
     std::string fragmentShaderStr = utils::readFile(fragmentPath);
     const char* vertexShader = vertexShaderStr.c_str();
-    const char* fshaderSource = fragmentShaderStr.c_str();
+    const char* fragmentShader = fragmentShaderStr.c_str();
 
     std::cout << "Loading vertex shader from: " << vertexPath << std::endl;
     std::cout << "Loading fragment shader from: " << fragmentPath << std::endl;
 
     GLuint vShader = createShader(vertexShader, GL_VERTEX_SHADER);
-    GLuint fShader = createShader(fshaderSource, GL_FRAGMENT_SHADER);
+    GLuint fShader = createShader(fragmentShader, GL_FRAGMENT_SHADER);
 
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vShader);

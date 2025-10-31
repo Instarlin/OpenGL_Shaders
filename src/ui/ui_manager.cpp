@@ -270,6 +270,12 @@ void UIManager::renderSettingsPopup(state::AppState &state) {
       state.settings.flags.dirty = true;
     }
 
+    float &scrollSensitivity = state.settings.interaction.scrollSensitivity;
+    if (ImGui::SliderFloat("Scroll sensitivity", &scrollSensitivity, 0.001f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic)) {
+      state.settings.flags.dirty = true;
+      state.inputState.scrollSensitivity = scrollSensitivity;
+    }
+
     ImGui::Spacing();
     if (ImGui::Button("Close")) {
       ImGui::CloseCurrentPopup();

@@ -62,7 +62,7 @@ void InputManager::mouseButtonCallback(GLFWwindow* window, int button, int actio
     state::AppState* data = getAppState(window);
     if (!data) return;
 
-    if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
         if (action == GLFW_PRESS) {
             data->inputState.isLeftMouseDown = true;
             glfwGetCursorPos(window, &data->inputState.mouseX, &data->inputState.mouseY);

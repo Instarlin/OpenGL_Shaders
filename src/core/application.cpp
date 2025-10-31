@@ -64,15 +64,14 @@ bool Application::init() {
     data.state.renderState.vertexPath = config.shaders.vertex;
     data.state.renderState.fragmentPath = config.shaders.fragment;
 
-    // Passing config to input state
-    data.state.inputState.scrollSensitivity = config.controls.scrollSensitivity;
-
     // Load persisted settings
     data.state.settings = data.configManager->getSettings();
     data.state.settings.flags.openSettings = false;
     data.state.settings.flags.closeSettings = false;
     data.state.settings.flags.settingsVisible = false;
     data.state.settings.flags.dirty = false;
+    data.state.inputState.scrollSensitivity =
+        data.state.settings.interaction.scrollSensitivity;
 
     // Setting up callbacks, both managed with GLFW
     window::WindowManager::setupCallbacks(data.window, &data.state);

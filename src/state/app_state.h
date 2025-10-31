@@ -31,6 +31,7 @@ struct InputState {
     bool isLeftCtrlDown = false;
     bool isLeftMouseDown = false;
     
+    // Mouse positions
     double mouseX  = 0.0;
     double mouseY  = 0.0;
     double dx      = 0.0;
@@ -40,7 +41,7 @@ struct InputState {
     double totalX  = 0.0;
     double totalY  = 0.0;
 
-    float scrollSensitivity = 0.0f;
+    float scrollSensitivity = 0.01f;
 };
 
 /**

@@ -21,9 +21,6 @@ struct AppConfig {
         std::string fragment = "glsl/fragment.glsl";
     } shaders;
 
-    struct Controls {
-      float scrollSensitivity = 1.0f;
-    } controls;
 };
 
 class ConfigManager {

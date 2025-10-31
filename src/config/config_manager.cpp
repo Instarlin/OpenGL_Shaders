@@ -42,10 +42,6 @@ void ConfigManager::createDefaultConfig() {
         {"shaders", {
             {"vertex", "glsl/vertex.glsl"},
             {"fragment", "glsl/fragment.glsl"}
-        }},
-        {"controls", {
-            {"scrollSensitivity", 0.01f},
-            {"_comment", "scrollInput*scrollSensitivity"}
         }}
     };
 
@@ -84,17 +80,9 @@ void ConfigManager::parseConfig(const json& j) {
         }
     }
 
-    if (j.contains("controls")) {
-        const auto& controls = j["controls"];
-        if (controls.contains("scrollSensitivity")) {
-          config.controls.scrollSensitivity = controls["scrollSensitivity"];
-        }
-    }
-
     std::cout << "Config loaded: " << config.window.width << "x" << config.window.height 
               << ", vertex: " << config.shaders.vertex 
               << ", fragment: " << config.shaders.fragment 
-              << ", scrollSensitivity: " << config.controls.scrollSensitivity
               << std::endl;
 }
 
@@ -144,6 +132,9 @@ void ConfigManager::parseSettings(const json& j) {
         if (interaction.contains("shaderAutoReload")) {
             settingsData.interaction.shaderAutoReload = interaction["shaderAutoReload"];
         }
+        if (interaction.contains("scrollSensitivity")) {
+            settingsData.interaction.scrollSensitivity = interaction["scrollSensitivity"];
+        }
     }
 }
 
@@ -161,7 +152,8 @@ void ConfigManager::saveSettings(const settings::Settings& settings) {
             {"uiScale", settingsData.visual.uiScale}
         }},
         {"interaction", {
-            {"shaderAutoReload", settingsData.interaction.shaderAutoReload}
+            {"shaderAutoReload", settingsData.interaction.shaderAutoReload},
+            {"scrollSensitivity", settingsData.interaction.scrollSensitivity}
         }}
     };
 

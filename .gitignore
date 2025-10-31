@@ -1,6 +1,7 @@
 *.exe
 .vscode
 .cache
+.clangd
 
 .venv/
 build/

@@ -8,6 +8,7 @@ struct VisualSettings {
 
 struct InteractionSettings {
     bool shaderAutoReload = false;
+    float scrollSensitivity = 0.01f;
 };
 
 struct Settings {
