@@ -21,7 +21,7 @@ This project is a real-time 3D scene renderer written in C++ using OpenGL, GLFW,
 - **Scroll Wheel**: Adjust camera distance (scaled by sensitivity from the config).
 - **Keyboard**:
   - `Left Ctrl + R`: Reload shaders and re-upload uniforms.
-  - `Left Ctrl + 1/2/3/4`: Switch between scene presets.
+  - `Left Ctrl + 1/2/3/4/5`: Switch between scene presets.
   - `Left Ctrl + S`: Toggle the Settings popup.
 - **Settings Popup**: Adjust UI scale and toggle shader auto-reload. The popup can be opened from the “Settings” button or via `Ctrl + S`.
 

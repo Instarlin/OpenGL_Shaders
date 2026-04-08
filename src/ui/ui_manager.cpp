@@ -125,6 +125,10 @@ void UIManager::renderContextMenu(state::AppState& state) {
             state.renderState.menuCase = 3;
             state.renderState.distance = 0.0f;
         }
+        if (ImGui::MenuItem("Sphere + Plane")) {
+            state.renderState.menuCase = 6;
+            state.renderState.distance = 0.0f;
+        }
         if (ImGui::MenuItem("Wormhole")) {
             state.renderState.menuCase = 4;
             state.renderState.distance = 4.0f;

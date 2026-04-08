@@ -37,6 +37,9 @@ void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int ac
             case GLFW_KEY_4:
                 data->renderState.menuCase = 3;
                 break;
+            case GLFW_KEY_5:
+                data->renderState.menuCase = 6;
+                break;
             case GLFW_KEY_S:
                 if (data->settings.flags.settingsVisible) {
                     data->settings.flags.closeSettings = true;

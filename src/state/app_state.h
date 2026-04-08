@@ -59,7 +59,7 @@ struct RenderState {
     GLuint fShader = 0;
     GLuint vbo[1];
     
-    int menuCase = 0;
+    int menuCase = 6;
     float distance = 0.0f;
     int renderSteps = 80;
     int timeSpeed = 10;

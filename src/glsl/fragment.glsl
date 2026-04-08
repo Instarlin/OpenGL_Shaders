@@ -61,6 +61,10 @@ float sdSphere(vec3 p, float r) {
   return length(p) - r;
 };
 
+float sdPlane(vec3 p, vec3 n, float h) {
+  return dot(p, n) + h;
+};
+
 float sdBox(vec3 p, vec3 b) {
   vec3 q = abs(p) - b;
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
@@ -101,6 +105,21 @@ mat3 rotY = mat3(
 );
 
 mat3 rotationMatrix = rotY * rotX;
+
+vec3 spherePlaneCenter() {
+  return vec3(0.0, 0.4 + 0.08 * sin(time * 1.35), 0.15 * cos(time * 0.75));
+}
+
+vec2 mapSpherePlane(vec3 p) {
+  float sphere = sdSphere(p - spherePlaneCenter(), 0.65);
+  float plane = sdPlane(p, vec3(0.0, 1.0, 0.0), 0.35);
+
+  if (sphere < plane) {
+    return vec2(sphere, 1.0);
+  }
+
+  return vec2(plane, 2.0);
+}
 
 float distCase(vec3 p) {
   float sphere, sphere1, box, ground; vec3 q, size, spherePosition, boxPosition;
@@ -230,7 +249,11 @@ float distCase(vec3 p) {
     case 5:
       p = p * rotationMatrix;
       return mandelbulb(p);
+    case 6:
+      return mapSpherePlane(p).x;
   }
+
+  return mapSpherePlane(p).x;
 };
 
 vec3 getNormal(vec3 p) {
@@ -242,8 +265,130 @@ vec3 getNormal(vec3 p) {
     ));
 };
 
+mat3 cameraBasis(vec3 ro, vec3 target) {
+  vec3 forward = normalize(target - ro);
+  vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), forward));
+  vec3 up = cross(forward, right);
+  return mat3(right, up, forward);
+}
+
+vec3 skyColor(vec3 rd) {
+  float horizon = clamp(rd.y * 0.5 + 0.5, 0.0, 1.0);
+  vec3 sky = mix(vec3(0.22, 0.31, 0.46), vec3(0.82, 0.9, 0.98), horizon);
+  float sun = pow(max(dot(rd, normalize(vec3(-0.6, 0.75, -0.4))), 0.0), 64.0);
+  return sky + vec3(1.0, 0.87, 0.7) * sun * 0.2;
+}
+
+float softShadow(vec3 ro, vec3 rd, float tMin, float tMax) {
+  float shadow = 1.0;
+  float t = tMin;
+
+  for (int i = 0; i < 48; i++) {
+    float h = mapSpherePlane(ro + rd * t).x;
+    if (h < 0.0005) {
+      return 0.0;
+    }
+
+    shadow = min(shadow, 12.0 * h / t);
+    t += clamp(h, 0.02, 0.3);
+
+    if (t > tMax) {
+      break;
+    }
+  }
+
+  return clamp(shadow, 0.0, 1.0);
+}
+
+float ambientOcclusion(vec3 p, vec3 n) {
+  float occ = 0.0;
+  float scale = 1.0;
+
+  for (int i = 1; i <= 5; i++) {
+    float h = 0.06 * float(i);
+    float d = mapSpherePlane(p + n * h).x;
+    occ += (h - d) * scale;
+    scale *= 0.6;
+  }
+
+  return clamp(1.0 - occ, 0.0, 1.0);
+}
+
+vec3 shadeSpherePlane(vec3 ro, vec3 rd) {
+  float t = 0.0;
+  float material = 0.0;
+  bool hit = false;
+
+  for (int i = 0; i < renderSteps; i++) {
+    vec3 p = ro + rd * t;
+    vec2 hitInfo = mapSpherePlane(p);
+
+    if (hitInfo.x < 0.0005) {
+      material = hitInfo.y;
+      hit = true;
+      break;
+    }
+
+    t += hitInfo.x;
+    if (t > 40.0) {
+      break;
+    }
+  }
+
+  if (!hit) {
+    return skyColor(rd);
+  }
+
+  vec3 p = ro + rd * t;
+  vec3 normal = getNormal(p);
+  vec3 lightDir = normalize(vec3(-0.6, 0.75, -0.4));
+  vec3 viewDir = -rd;
+  vec3 halfVec = normalize(lightDir + viewDir);
+
+  float shadow = softShadow(p + normal * 0.01, lightDir, 0.02, 12.0);
+  float diff = max(dot(normal, lightDir), 0.0) * shadow;
+  float spec = pow(max(dot(normal, halfVec), 0.0), 96.0) * shadow;
+  float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 5.0);
+  float ao = ambientOcclusion(p, normal);
+
+  vec3 baseColor = vec3(0.95, 0.36, 0.2);
+  if (material > 1.5) {
+    float tiles = mod(floor(p.x) + floor(p.z), 2.0);
+    baseColor = mix(vec3(0.88), vec3(0.22), tiles);
+  }
+
+  vec3 color = baseColor * (0.16 * ao + 0.95 * diff);
+  color += vec3(1.0, 0.95, 0.85) * spec * mix(1.0, 0.35, step(1.5, material));
+  color += skyColor(reflect(rd, normal)) * mix(0.18, 0.05, step(1.5, material));
+  color += baseColor * fresnel * 0.12;
+
+  if (material > 1.5) {
+    float rim = smoothstep(0.0, 0.8, 1.0 - max(dot(normal, viewDir), 0.0));
+    color += vec3(0.03, 0.04, 0.05) * rim;
+  }
+
+  return color;
+}
+
 void main(void) {
   vec2 uv = vec2((gl_FragCoord.x*2.0-width)/height, (gl_FragCoord.y*2.0-height)/height);
+
+  if (menuCase == 6) {
+    float yaw = -mouseX * 0.01;
+    float pitch = clamp(-mouseY * 0.006, -0.6, 0.85);
+    float cameraDistance = max(2.2, 4.2 + posOffset);
+    vec3 target = vec3(0.0, 0.2, 0.0);
+    vec3 orbitDirection = normalize(vec3(
+      sin(yaw) * cos(pitch),
+      0.35 + sin(pitch),
+      -cos(yaw) * cos(pitch)
+    ));
+    vec3 ro = target + orbitDirection * cameraDistance;
+    vec3 rd = normalize(cameraBasis(ro, target) * vec3(uv, 1.7));
+
+    fragColor = vec4(shadeSpherePlane(ro, rd), 1.0);
+    return;
+  }
 
   vec3 ro = vec3(0.0, 0.0, -3.0 - posOffset);     // origin
   vec3 rd = normalize(vec3(uv, 1));               // direction
